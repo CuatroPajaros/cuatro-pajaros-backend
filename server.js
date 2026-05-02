@@ -7,7 +7,7 @@ const fs = require('fs');
 const https = require('https');
 const csv = require('csv-parse/sync');
 const { google } = require('googleapis');
-const { JWT } = require('google-auth-library');
+const { GoogleAuth } = require('google-auth-library');
 
 // Sistema de descuentos desde Airtable
 const { validateCode, applyCode, getActiveCodes, calculateDiscount } = require('./airtableDiscounts');
@@ -71,7 +71,7 @@ const productSchema = new mongoose.Schema({
 const Product = mongoose.model('Product', productSchema);
 
 // Autenticar con Google Sheets API usando Service Account
-function getAuthenticatedSheetsClient() {
+async function getAuthenticatedSheetsClient() {
   try {
     // Decodificar el JSON del Service Account desde base64
     console.log('🔐 Decodificando Service Account desde base64...');
@@ -81,26 +81,25 @@ function getAuthenticatedSheetsClient() {
     const serviceAccountJSON = JSON.parse(decoded);
     console.log('✅ JSON parseado exitosamente, email:', serviceAccountJSON.client_email);
 
-    const auth = new JWT({
-      email: serviceAccountJSON.client_email,
-      key: serviceAccountJSON.private_key,
+    // Usar GoogleAuth para manejar la autenticación
+    const auth = new GoogleAuth({
+      credentials: serviceAccountJSON,
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
 
-    console.log('✅ JWT creado exitosamente');
+    console.log('✅ GoogleAuth creado exitosamente');
     return google.sheets({ version: 'v4', auth });
   } catch (err) {
     console.error('❌ Error en getAuthenticatedSheetsClient:', err.message);
     throw err;
   }
 }
-
 // Función para obtener datos desde Google Sheets (autenticado)
 async function getCharmsFromGoogleSheets() {
   try {
     console.log('🔐 Autenticando con Google Sheets API...');
 
-    const sheets = getAuthenticatedSheetsClient();
+    const sheets = await getAuthenticatedSheetsClient();
     const spreadsheetId = '1Ed2d6dqnyc700gsF6oW-ZJP3hx32qNV31TSwszGEi3k';
     const range = 'INVENTARIO!A1:H1000'; // Rango que incluye header y datos
 
