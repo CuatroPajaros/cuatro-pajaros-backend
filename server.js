@@ -83,13 +83,13 @@ async function getAuthenticatedSheetsClient() {
     const { JWT } = require('google-auth-library');
     const auth = new JWT({
       email: serviceAccountJSON.client_email,
-      key: serviceAccountJSON.private_key.replace(/\\n/g, '\n'),
+      key: serviceAccountJSON.private_key,
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
 
-    // Autorizar explícitamente
-    await auth.authorize();
-    console.log('✅ JWT creado y autorizado exitosamente');
+    // Get access token to validate credentials early
+    const token = await auth.getAccessToken();
+    console.log('✅ JWT token obtenido exitosamente');
 
     return google.sheets({ version: 'v4', auth });
   } catch (err) {
