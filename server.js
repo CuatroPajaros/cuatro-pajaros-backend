@@ -72,9 +72,14 @@ const Product = mongoose.model('Product', productSchema);
 
 // Autenticar con Google Sheets API usando Service Account
 function getAuthenticatedSheetsClient() {
+  // Decodificar el JSON del Service Account desde base64
+  const serviceAccountJSON = JSON.parse(
+    Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8')
+  );
+
   const auth = new JWT({
-    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-    key: process.env.GOOGLE_PRIVATE_KEY.replace(/\\n/g, '\n'),
+    email: serviceAccountJSON.client_email,
+    key: serviceAccountJSON.private_key,
     scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
 
