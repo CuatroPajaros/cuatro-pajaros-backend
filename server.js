@@ -83,7 +83,7 @@ async function getAuthenticatedSheetsClient() {
     const { JWT } = require('google-auth-library');
     const auth = new JWT({
       email: serviceAccountJSON.client_email,
-      key: serviceAccountJSON.private_key,
+      key: serviceAccountJSON.private_key.replace(/\\n/g, '\n'),
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
 
