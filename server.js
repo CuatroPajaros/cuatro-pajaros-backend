@@ -6,6 +6,8 @@ const path = require('path');
 const fs = require('fs');
 const https = require('https');
 const csv = require('csv-parse/sync');
+const { google } = require('googleapis');
+const { JWT } = require('google-auth-library');
 
 // Sistema de descuentos desde Airtable
 const { validateCode, applyCode, getActiveCodes, calculateDiscount } = require('./airtableDiscounts');
@@ -68,55 +70,105 @@ const productSchema = new mongoose.Schema({
 
 const Product = mongoose.model('Product', productSchema);
 
-// Función para descargar CSV desde Google Sheets publicado
-function downloadCSV() {
-  return new Promise((resolve, reject) => {
-    const url = 'https://docs.google.com/spreadsheets/d/1Ed2d6dqnyc700gsF6oW-ZJP3hx32qNV31TSwszGEi3k/export?format=csv&gid=866448467';
-
-    https.get(url, (res) => {
-      let data = '';
-      res.on('data', chunk => data += chunk);
-      res.on('end', () => resolve(data));
-      res.on('error', reject);
-    }).on('error', reject);
+// Autenticar con Google Sheets API usando Service Account
+function getAuthenticatedSheetsClient() {
+  const auth = new JWT({
+    email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
+    key: process.env.GOOGLE_PRIVATE_KEY,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
   });
+
+  return google.sheets({ version: 'v4', auth });
 }
 
-// Función para parsear datos del CSV
-function parseCharmsFromCSV(csvData) {
-  const records = csv.parse(csvData, {
-    columns: true,
-    skip_empty_lines: true,
-    trim: true
+// Función para obtener datos desde Google Sheets (autenticado)
+async function getCharmsFromGoogleSheets() {
+  try {
+    console.log('🔐 Autenticando con Google Sheets API...');
+
+    const sheets = getAuthenticatedSheetsClient();
+    const spreadsheetId = '1Ed2d6dqnyc700gsF6oW-ZJP3hx32qNV31TSwszGEi3k';
+    const range = 'Charms!A1:H1000'; // Rango que incluye header y datos
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
+    });
+
+    const rows = response.data.values || [];
+    if (rows.length === 0) {
+      throw new Error('No data found in Google Sheets');
+    }
+
+    // Primera fila son headers
+    const headers = rows[0];
+    const dataRows = rows.slice(1);
+
+    console.log(`✅ Google Sheets API: ${dataRows.length} filas obtenidas`);
+
+    return { headers, dataRows };
+  } catch (err) {
+    console.error('❌ Error obteniendo datos de Google Sheets:', err.message);
+    throw err;
+  }
+}
+
+// Función para parsear datos del Google Sheets API
+function parseCharmsFromGoogleSheets(headers, dataRows) {
+  // Mapear índices de columnas desde los headers
+  const headerMap = {};
+  headers.forEach((header, index) => {
+    headerMap[header.trim()] = index;
   });
 
-  return records.map((row, index) => {
-    const tags = row.TAGS
-      ? row.TAGS.split(';').map(t => t.trim().toUpperCase())
+  console.log('📋 Headers encontrados:', Object.keys(headerMap).join(', '));
+
+  return dataRows.map((row, index) => {
+    // Acceder a los valores usando el índice del header
+    const nombreCharm = row[headerMap['Nombre_Charm']] || '';
+    const tagsStr = row[headerMap['TAGS']] || '';
+    const stockStr = row[headerMap['Stock_Disponible']] || '0';
+    const colorCharm = row[headerMap['Color']] || '';
+    const tipoCharm = row[headerMap['TIPO']] || '';
+    const precioStr = row[headerMap['Precio_Venta_COP']] || '20000';
+    const fotoReferencia = row[headerMap['Foto_Referencia']] || '';
+
+    // Solo procesar si hay nombre
+    if (!nombreCharm) {
+      return null;
+    }
+
+    const tags = tagsStr
+      ? tagsStr.split(';').map(t => t.trim().toUpperCase()).filter(t => t)
       : [];
 
     return {
       _id: `charm_${index + 1}`,
-      name: row.Nombre_Charm || '',
-      type: (row.TIPO || '').toUpperCase(),
+      name: nombreCharm,
+      type: tipoCharm.toUpperCase(),
       tags: tags,
-      price: parseInt(row.Precio_Venta_COP) || 20000,
-      stock: parseInt(row.Stock_Disponible) || 0,
-      color: row.Color || '',
-      image: row.Foto_Referencia || '',
+      price: parseInt(precioStr) || 20000,
+      stock: parseInt(stockStr) || 0,
+      color: colorCharm,
+      image: fotoReferencia, // Usa directamente la URL de Cloudinary desde Google Sheets
       active: true
     };
-  }).filter(charm => charm.name);
+  }).filter(charm => charm !== null);
 }
 
-// API Endpoint para sincronizar desde Google Sheets
+// API Endpoint para sincronizar desde Google Sheets (AUTENTICADO)
 app.post('/api/sync', async (req, res) => {
   try {
-    console.log('🔄 Sincronizando desde Google Sheets...');
+    console.log('🔄 Sincronizando desde Google Sheets (API autenticada)...');
 
-    const csvData = await downloadCSV();
-    const charms = parseCharmsFromCSV(csvData);
+    const { headers, dataRows } = await getCharmsFromGoogleSheets();
+    const charms = parseCharmsFromGoogleSheets(headers, dataRows);
 
+    if (charms.length === 0) {
+      return res.status(400).json({ error: 'No charms found in Google Sheets' });
+    }
+
+    // Limpiar y reinsertar
     await Product.deleteMany({});
     await Product.insertMany(charms);
 
@@ -141,6 +193,7 @@ app.get('/api/products', async (req, res) => {
   try {
     const filter = { active: true };
 
+    // Filtrar por tipo si se proporciona
     if (req.query.type) {
       filter.type = req.query.type.toUpperCase();
     }
@@ -153,6 +206,8 @@ app.get('/api/products', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// ==================== ENDPOINTS DE CÓDIGOS DE DESCUENTO ====================
 
 // Validar código de descuento
 app.post('/api/validate-code', (req, res) => {
@@ -169,6 +224,7 @@ app.post('/api/validate-code', (req, res) => {
       return res.status(400).json({ error: validation.error });
     }
 
+    // Si se proporciona el total, calcular el descuento
     if (total && typeof total === 'number') {
       const discount = calculateDiscount(total, validation.descuento_pct);
       return res.json({
@@ -181,6 +237,7 @@ app.post('/api/validate-code', (req, res) => {
       });
     }
 
+    // Solo validar el código
     res.json({
       valido: true,
       codigo: validation.codigo,
@@ -192,7 +249,7 @@ app.post('/api/validate-code', (req, res) => {
   }
 });
 
-// Aplicar descuento
+// Aplicar descuento (para carrito final)
 app.post('/api/apply-discount', (req, res) => {
   try {
     const { codigo, total } = req.body;
@@ -209,7 +266,7 @@ app.post('/api/apply-discount', (req, res) => {
   }
 });
 
-// Obtener códigos activos
+// Obtener códigos activos (para mostrar en UI)
 app.get('/api/active-codes', (req, res) => {
   try {
     const codes = getActiveCodes();
@@ -239,13 +296,18 @@ app.get('/', (req, res) => {
   });
 });
 
-// Sincronización automática
+// ==================== SINCRONIZACIÓN AUTOMÁTICA ====================
 async function autoSyncFromGoogleSheets() {
   try {
-    console.log('\n🔄 [AUTO-SYNC] Descargando datos de Google Sheets...');
+    console.log('\n🔄 [AUTO-SYNC] Obteniendo datos de Google Sheets API...');
 
-    const csvData = await downloadCSV();
-    const charms = parseCharmsFromCSV(csvData);
+    const { headers, dataRows } = await getCharmsFromGoogleSheets();
+    const charms = parseCharmsFromGoogleSheets(headers, dataRows);
+
+    if (charms.length === 0) {
+      console.log('⚠️ [AUTO-SYNC] No charms encontrados en Google Sheets');
+      return;
+    }
 
     await Product.deleteMany({});
     await Product.insertMany(charms);
@@ -258,32 +320,11 @@ async function autoSyncFromGoogleSheets() {
   }
 }
 
+// Sincronizar automáticamente cada 5 minutos
 setInterval(autoSyncFromGoogleSheets, 5 * 60 * 1000);
 
-// Seed de charms de prueba (mientras resolvemos Google Sheets)
-async function loadDefaultCharms() {
-  try {
-    const existingCharms = await Product.countDocuments({ type: 'CHARM' });
-    if (existingCharms === 0) {
-      console.log('📦 Cargando charms por defecto desde Cloudinary...');
-
-      const defaultCharms = [
-        { _id: 'charm_1', name: 'Girasol Dorado', type: 'CHARM', tags: ['BOTANICA', 'NATURALEZA'], price: 20000, stock: 50, color: 'GOLD', image: 'https://res.cloudinary.com/dlrocl9fr/image/upload/girasol_dorado.jpg', active: true },
-        { _id: 'charm_2', name: 'Serpiente Plata', type: 'CHARM', tags: ['ANIMALES', 'MISTICO'], price: 20000, stock: 50, color: 'SILVER', image: 'https://res.cloudinary.com/dlrocl9fr/image/upload/serpiente_plata.jpg', active: true },
-        { _id: 'charm_3', name: 'Medalla Zodiaco', type: 'CHARM', tags: ['ZODIACO', 'MISTICO'], price: 20000, stock: 50, color: 'GOLD', image: 'https://res.cloudinary.com/dlrocl9fr/image/upload/medalla_zodiaco.jpg', active: true }
-      ];
-
-      await Product.insertMany(defaultCharms);
-      console.log('✅ Charms por defecto cargados');
-    }
-  } catch (err) {
-    console.error('❌ Error cargando charms por defecto:', err.message);
-  }
-}
-
-// Cargar charms por defecto al iniciar
+// Hacer la primera sincronización al iniciar
 autoSyncFromGoogleSheets();
-loadDefaultCharms();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('🚀 http://localhost:' + PORT));
