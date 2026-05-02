@@ -7,7 +7,7 @@ const fs = require('fs');
 const https = require('https');
 const csv = require('csv-parse/sync');
 const { google } = require('googleapis');
-const { GoogleAuth } = require('google-auth-library');
+const { JWT } = require('google-auth-library');
 
 // Sistema de descuentos desde Airtable
 const { validateCode, applyCode, getActiveCodes, calculateDiscount } = require('./airtableDiscounts');
@@ -80,16 +80,16 @@ async function getAuthenticatedSheetsClient() {
     const serviceAccountJSON = JSON.parse(decoded);
     console.log('✅ JSON parseado exitosamente, email:', serviceAccountJSON.client_email);
 
-    const { GoogleAuth } = require('google-auth-library');
-    const auth = new GoogleAuth({
-      credentials: serviceAccountJSON,
+    const { JWT } = require('google-auth-library');
+    const auth = new JWT({
+      email: serviceAccountJSON.client_email,
+      key: serviceAccountJSON.private_key,
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
 
-    const client = await auth.getClient();
-    console.log('✅ Cliente autenticado exitosamente');
-    
-    return google.sheets({ version: 'v4', auth: client });
+    console.log('✅ JWT creado y autorizado exitosamente');
+
+    return google.sheets({ version: 'v4', auth });
   } catch (err) {
     console.error('❌ Error en getAuthenticatedSheetsClient:', err.message);
     throw err;
