@@ -96,6 +96,20 @@ async function getAuthenticatedSheetsClient() {
   }
 }
 
+// Función para obtener datos desde Google Sheets (autenticado)
+async function getCharmsFromGoogleSheets() {
+  try {
+    console.log('🔐 Autenticando con Google Sheets API...');
+
+    const sheets = await getAuthenticatedSheetsClient();
+    const spreadsheetId = '1Ed2d6dqnyc700gsF6oW-ZJP3hx32qNV31TSwszGEi3k';
+    const range = 'INVENTARIO!A1:H1000'; // Rango que incluye header y datos
+
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId,
+      range,
+    });
+
     const rows = response.data.values || [];
     if (rows.length === 0) {
       throw new Error('No data found in Google Sheets');
