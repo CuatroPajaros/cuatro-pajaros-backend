@@ -73,23 +73,11 @@ const Product = mongoose.model('Product', productSchema);
 // Autenticar con Google Sheets API usando Service Account
 async function getAuthenticatedSheetsClient() {
   try {
+    // Decodificar el JSON del Service Account desde base64
     console.log('🔐 Decodificando Service Account desde base64...');
-    const decoded = Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8');
-    console.log('✅ Base64 decodificado exitosamente');
-
-    const serviceAccountJSON = JSON.parse(decoded);
-    console.log('✅ JSON parseado exitosamente, email:', serviceAccountJSON.client_email);
-
-    const { GoogleAuth } = require('google-auth-library');
-    const auth = new GoogleAuth({
-      credentials: serviceAccountJSON,
-      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
-    });
-
-    const client = await auth.getClient();
-    console.log('✅ Cliente autenticado exitosamente');
-    
-    return google.sheets({ version: 'v4', auth: client });
+    ...
+    console.log('✅ GoogleAuth creado exitosamente');
+    return google.sheets({ version: 'v4', auth });
   } catch (err) {
     console.error('❌ Error en getAuthenticatedSheetsClient:', err.message);
     throw err;
