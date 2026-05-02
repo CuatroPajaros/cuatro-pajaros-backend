@@ -87,6 +87,8 @@ async function getAuthenticatedSheetsClient() {
       scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
     });
 
+    // Autorizar explícitamente
+    await auth.authorize();
     console.log('✅ JWT creado y autorizado exitosamente');
 
     return google.sheets({ version: 'v4', auth });
