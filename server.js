@@ -88,7 +88,7 @@ async function getCharmsFromGoogleSheets() {
 
     const sheets = getAuthenticatedSheetsClient();
     const spreadsheetId = '1Ed2d6dqnyc700gsF6oW-ZJP3hx32qNV31TSwszGEi3k';
-    const range = 'Charms!A1:H1000'; // Rango que incluye header y datos
+    const range = 'INVENTARIO!A1:H1000'; // Rango que incluye header y datos
 
     const response = await sheets.spreadsheets.values.get({
       spreadsheetId,
