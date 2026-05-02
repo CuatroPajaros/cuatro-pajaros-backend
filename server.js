@@ -95,6 +95,17 @@ function parseCharmsFromCSV(csvData) {
       ? row.TAGS.split(';').map(t => t.trim().toUpperCase())
       : [];
 
+    // Construir URL de Cloudinary automáticamente basándose en el nombre del charm
+    let imageUrl = '';
+    if (row.Nombre_Charm) {
+      // Reemplazar espacios y caracteres especiales con guiones bajos
+      const charmNameForURL = row.Nombre_Charm
+        .toLowerCase()
+        .replace(/\s+/g, '_')
+        .replace(/[^\w_]/g, '');
+      imageUrl = `https://res.cloudinary.com/dlrocl9fr/image/upload/${charmNameForURL}.jpg`;
+    }
+
     return {
       _id: `charm_${index + 1}`,
       name: row.Nombre_Charm || '',
@@ -103,7 +114,7 @@ function parseCharmsFromCSV(csvData) {
       price: parseInt(row.Precio_Venta_COP) || 20000,
       stock: parseInt(row.Stock_Disponible) || 0,
       color: row.Color || '',
-      image: row.Foto_Referencia || '',
+      image: imageUrl,
       active: true
     };
   }).filter(charm => charm.name);
