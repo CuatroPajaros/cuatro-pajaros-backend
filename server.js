@@ -73,29 +73,28 @@ const Product = mongoose.model('Product', productSchema);
 // Autenticar con Google Sheets API usando Service Account
 async function getAuthenticatedSheetsClient() {
   try {
-    // Decodificar el JSON del Service Account desde base64
     console.log('🔐 Decodificando Service Account desde base64...');
-    ...
-    console.log('✅ GoogleAuth creado exitosamente');
-    return google.sheets({ version: 'v4', auth });
+    const decoded = Buffer.from(process.env.GOOGLE_SERVICE_ACCOUNT_B64, 'base64').toString('utf8');
+    console.log('✅ Base64 decodificado exitosamente');
+
+    const serviceAccountJSON = JSON.parse(decoded);
+    console.log('✅ JSON parseado exitosamente, email:', serviceAccountJSON.client_email);
+
+    const { GoogleAuth } = require('google-auth-library');
+    const auth = new GoogleAuth({
+      credentials: serviceAccountJSON,
+      scopes: ['https://www.googleapis.com/auth/spreadsheets.readonly'],
+    });
+
+    const client = await auth.getClient();
+    console.log('✅ Cliente autenticado exitosamente');
+    
+    return google.sheets({ version: 'v4', auth: client });
   } catch (err) {
     console.error('❌ Error en getAuthenticatedSheetsClient:', err.message);
     throw err;
   }
 }
-// Función para obtener datos desde Google Sheets (autenticado)
-async function getCharmsFromGoogleSheets() {
-  try {
-    console.log('🔐 Autenticando con Google Sheets API...');
-
-    const sheets = await getAuthenticatedSheetsClient();
-    const spreadsheetId = '1Ed2d6dqnyc700gsF6oW-ZJP3hx32qNV31TSwszGEi3k';
-    const range = 'INVENTARIO!A1:H1000'; // Rango que incluye header y datos
-
-    const response = await sheets.spreadsheets.values.get({
-      spreadsheetId,
-      range,
-    });
 
     const rows = response.data.values || [];
     if (rows.length === 0) {
