@@ -95,17 +95,6 @@ function parseCharmsFromCSV(csvData) {
       ? row.TAGS.split(';').map(t => t.trim().toUpperCase())
       : [];
 
-    // Construir URL de Cloudinary automáticamente basándose en el nombre del charm
-    let imageUrl = '';
-    if (row.Nombre_Charm) {
-      // Reemplazar espacios y caracteres especiales con guiones bajos
-      const charmNameForURL = row.Nombre_Charm
-        .toLowerCase()
-        .replace(/\s+/g, '_')
-        .replace(/[^\w_]/g, '');
-      imageUrl = `https://res.cloudinary.com/dlrocl9fr/image/upload/${charmNameForURL}.jpg`;
-    }
-
     return {
       _id: `charm_${index + 1}`,
       name: row.Nombre_Charm || '',
@@ -114,7 +103,7 @@ function parseCharmsFromCSV(csvData) {
       price: parseInt(row.Precio_Venta_COP) || 20000,
       stock: parseInt(row.Stock_Disponible) || 0,
       color: row.Color || '',
-      image: imageUrl,
+      image: row.Foto_Referencia || '',
       active: true
     };
   }).filter(charm => charm.name);
@@ -270,7 +259,31 @@ async function autoSyncFromGoogleSheets() {
 }
 
 setInterval(autoSyncFromGoogleSheets, 5 * 60 * 1000);
+
+// Seed de charms de prueba (mientras resolvemos Google Sheets)
+async function loadDefaultCharms() {
+  try {
+    const existingCharms = await Product.countDocuments({ type: 'CHARM' });
+    if (existingCharms === 0) {
+      console.log('📦 Cargando charms por defecto desde Cloudinary...');
+
+      const defaultCharms = [
+        { _id: 'charm_1', name: 'Girasol Dorado', type: 'CHARM', tags: ['BOTANICA', 'NATURALEZA'], price: 20000, stock: 50, color: 'GOLD', image: 'https://res.cloudinary.com/dlrocl9fr/image/upload/girasol_dorado.jpg', active: true },
+        { _id: 'charm_2', name: 'Serpiente Plata', type: 'CHARM', tags: ['ANIMALES', 'MISTICO'], price: 20000, stock: 50, color: 'SILVER', image: 'https://res.cloudinary.com/dlrocl9fr/image/upload/serpiente_plata.jpg', active: true },
+        { _id: 'charm_3', name: 'Medalla Zodiaco', type: 'CHARM', tags: ['ZODIACO', 'MISTICO'], price: 20000, stock: 50, color: 'GOLD', image: 'https://res.cloudinary.com/dlrocl9fr/image/upload/medalla_zodiaco.jpg', active: true }
+      ];
+
+      await Product.insertMany(defaultCharms);
+      console.log('✅ Charms por defecto cargados');
+    }
+  } catch (err) {
+    console.error('❌ Error cargando charms por defecto:', err.message);
+  }
+}
+
+// Cargar charms por defecto al iniciar
 autoSyncFromGoogleSheets();
+loadDefaultCharms();
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('🚀 http://localhost:' + PORT));
