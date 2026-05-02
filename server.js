@@ -84,7 +84,6 @@ function downloadCSV() {
 
 // Función para parsear datos del CSV
 function parseCharmsFromCSV(csvData) {
-  // Usar csv-parse para manejar correctamente CSV con comillas y comillas escapadas
   const records = csv.parse(csvData, {
     columns: true,
     skip_empty_lines: true,
@@ -118,7 +117,6 @@ app.post('/api/sync', async (req, res) => {
     const csvData = await downloadCSV();
     const charms = parseCharmsFromCSV(csvData);
 
-    // Limpiar y reinsertar
     await Product.deleteMany({});
     await Product.insertMany(charms);
 
@@ -143,6 +141,125 @@ app.get('/api/products', async (req, res) => {
   try {
     const filter = { active: true };
 
-    // Filtrar por tipo si se proporciona
     if (req.query.type) {
-      filter.type = req.query.type
+      filter.type = req.query.type.toUpperCase();
+    }
+
+    const products = await Product.find(filter).sort({ name: 1 });
+    console.log('📦 Productos enviados:', products.length, 'Filtro:', filter);
+    res.json(products);
+  } catch (err) {
+    console.error('❌ Error en /api/products:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Validar código de descuento
+app.post('/api/validate-code', (req, res) => {
+  try {
+    const { codigo, total } = req.body;
+
+    if (!codigo) {
+      return res.status(400).json({ error: 'Código requerido' });
+    }
+
+    const validation = validateCode(codigo);
+
+    if (!validation.valido) {
+      return res.status(400).json({ error: validation.error });
+    }
+
+    if (total && typeof total === 'number') {
+      const discount = calculateDiscount(total, validation.descuento_pct);
+      return res.json({
+        valido: true,
+        codigo: validation.codigo,
+        descuento_pct: validation.descuento_pct,
+        descuento_monto: discount.descuento_monto,
+        total_original: discount.subtotal,
+        total_con_descuento: discount.total_con_descuento
+      });
+    }
+
+    res.json({
+      valido: true,
+      codigo: validation.codigo,
+      descuento_pct: validation.descuento_pct
+    });
+  } catch (err) {
+    console.error('❌ Error en validación de código:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Aplicar descuento
+app.post('/api/apply-discount', (req, res) => {
+  try {
+    const { codigo, total } = req.body;
+
+    if (!codigo || typeof total !== 'number') {
+      return res.status(400).json({ error: 'Código y total requeridos' });
+    }
+
+    const result = applyCode(total, codigo);
+    res.json(result);
+  } catch (err) {
+    console.error('❌ Error aplicando descuento:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Obtener códigos activos
+app.get('/api/active-codes', (req, res) => {
+  try {
+    const codes = getActiveCodes();
+    res.json({
+      success: true,
+      codes: codes,
+      count: codes.length
+    });
+  } catch (err) {
+    console.error('❌ Error obteniendo códigos activos:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API Status
+app.get('/', (req, res) => {
+  res.json({
+    status: '✅ Cuatro Pájaros Backend API running',
+    version: '1.0.0',
+    endpoints: {
+      products: 'GET /api/products',
+      sync: 'POST /api/sync',
+      validateCode: 'POST /api/validate-code',
+      applyDiscount: 'POST /api/apply-discount',
+      activeCodes: 'GET /api/active-codes'
+    }
+  });
+});
+
+// Sincronización automática
+async function autoSyncFromGoogleSheets() {
+  try {
+    console.log('\n🔄 [AUTO-SYNC] Descargando datos de Google Sheets...');
+
+    const csvData = await downloadCSV();
+    const charms = parseCharmsFromCSV(csvData);
+
+    await Product.deleteMany({});
+    await Product.insertMany(charms);
+
+    const allTags = [...new Set(charms.flatMap(c => c.tags))].sort();
+    console.log(`✅ [AUTO-SYNC] ${charms.length} productos sincronizados`);
+    console.log(`🏷️  Tags: ${allTags.join(', ')}`);
+  } catch (err) {
+    console.error('❌ [AUTO-SYNC] Error:', err.message);
+  }
+}
+
+setInterval(autoSyncFromGoogleSheets, 5 * 60 * 1000);
+autoSyncFromGoogleSheets();
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log('🚀 http://localhost:' + PORT));
