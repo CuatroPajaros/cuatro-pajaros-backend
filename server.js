@@ -46,6 +46,15 @@ app.use('/fotos', express.static(fotosPath));
 const backendPath = path.resolve(__dirname);
 app.use(express.static(backendPath));
 
+// Rutas explícitas para archivos HTML
+app.get('/upload-charm-images.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'upload-charm-images.html'));
+});
+
+app.get('/admin-charm-images.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'admin-charm-images.html'));
+});
+
 console.log('📁 Rutas de imágenes configuradas:');
 console.log('  /CHARMS ->', path.join(fotosPath, 'CHARMS'));
 console.log('  /CORDONES ->', path.join(fotosPath, 'CORDONES'));
