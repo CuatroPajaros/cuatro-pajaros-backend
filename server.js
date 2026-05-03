@@ -237,6 +237,42 @@ app.post('/api/sync', async (req, res) => {
   }
 });
 
+// API Endpoint para guardar imagen individual de un charm
+app.post('/api/save-charm-image', async (req, res) => {
+  try {
+    const { charm_name, cloudinary_url } = req.body;
+
+    if (!charm_name || !cloudinary_url) {
+      return res.status(400).json({ error: 'charm_name y cloudinary_url requeridos' });
+    }
+
+    // Guardar o actualizar en CharmImage
+    await CharmImage.findByIdAndUpdate(
+      charm_name,
+      {
+        _id: charm_name,
+        nombre_charm: charm_name,
+        cloudinary_url: cloudinary_url
+      },
+      { upsert: true, new: true }
+    );
+
+    // Recargar cache en memoria
+    charmImagesCache[charm_name] = cloudinary_url;
+
+    console.log(`✅ Imagen guardada para ${charm_name}`);
+    res.json({
+      success: true,
+      message: `Imagen guardada para ${charm_name}`,
+      charm_name: charm_name,
+      cloudinary_url: cloudinary_url
+    });
+  } catch (err) {
+    console.error('❌ Error en /api/save-charm-image:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // API Endpoint para subir/procesar CSV de imágenes de charms
 app.post('/api/upload-charm-images', express.text(), async (req, res) => {
   try {
