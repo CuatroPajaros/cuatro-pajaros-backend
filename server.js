@@ -282,7 +282,84 @@ app.post('/api/save-charm-image', async (req, res) => {
   }
 });
 
-// API Endpoint para subir/procesar CSV de imágenes de charms
+// API Endpoint para sincronizar charms + imágenes desde CSV
+app.post('/api/sync-charms-from-csv', express.text(), async (req, res) => {
+  try {
+    console.log('📤 Sincronizando charms e imágenes desde CSV...');
+
+    const csvText = req.body;
+    const records = csv.parse(csvText, {
+      columns: true,
+      skip_empty_lines: true
+    });
+
+    console.log(`📊 CSV parseado: ${records.length} registros encontrados`);
+
+    let charmCount = 0;
+    let imageCount = 0;
+    const charmImages = [];
+    const charmsToInsert = [];
+
+    for (const record of records) {
+      const nombreCharm = record['Nombre_Charm']?.trim();
+      const nombreUnico = record['Nombre Único (Display Name)']?.trim();
+      const cloudinaryUrl = record['Clour ordinary URL']?.trim();
+
+      if (nombreCharm && cloudinaryUrl) {
+        // Preparar charm para insertar en Product
+        charmsToInsert.push({
+          _id: `charm_${charmCount + 1}`,
+          name: nombreCharm,
+          type: 'CHARM',
+          price: 15000, // precio default
+          stock: 10, // stock default
+          color: '',
+          image: cloudinaryUrl,
+          tags: [],
+          active: true
+        });
+
+        // Preparar imagen para CharmImage
+        charmImages.push({
+          _id: nombreCharm,
+          nombre_charm: nombreCharm,
+          cloudinary_url: cloudinaryUrl
+        });
+
+        charmCount++;
+        imageCount++;
+      }
+    }
+
+    if (charmsToInsert.length === 0) {
+      return res.status(400).json({ error: 'No charms found in CSV' });
+    }
+
+    // Insertar charms en Product
+    await Product.deleteMany({ type: 'CHARM' });
+    await Product.insertMany(charmsToInsert);
+
+    // Insertar imágenes en CharmImage
+    await CharmImage.deleteMany({});
+    await CharmImage.insertMany(charmImages);
+
+    // Recargar cache
+    await loadCharmImagesCache();
+
+    console.log(`✅ ${charmCount} charms + ${imageCount} imágenes sincronizados`);
+    res.json({
+      success: true,
+      message: `${charmCount} charms y ${imageCount} imágenes sincronizados correctamente`,
+      charms: charmCount,
+      images: imageCount
+    });
+  } catch (err) {
+    console.error('❌ Error en /api/sync-charms-from-csv:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// API Endpoint para subir/procesar CSV de imágenes de charms (legado)
 app.post('/api/upload-charm-images', express.text(), async (req, res) => {
   try {
     console.log('📤 Procesando CSV de imágenes de charms...');
