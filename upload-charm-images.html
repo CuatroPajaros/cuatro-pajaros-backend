@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Subir Imágenes de Charms</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 600px;
+      width: 100%;
+    }
+
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+      font-size: 28px;
+    }
+
+    .subtitle {
+      color: #666;
+      margin-bottom: 30px;
+      font-size: 14px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+
+    input[type="file"] {
+      display: block;
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    input[type="file"]:hover {
+      border-color: #667eea;
+    }
+
+    input[type="file"]:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    button {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+
+    button:active {
+      transform: translateY(0);
+    }
+
+    .result {
+      margin-top: 30px;
+      padding: 20px;
+      border-radius: 8px;
+      display: none;
+      animation: slideIn 0.3s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .result.success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .result.error {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .result.loading {
+      background: #e2e3e5;
+      border: 1px solid #d6d8db;
+      color: #383d41;
+    }
+
+    .result h3 {
+      margin-bottom: 8px;
+      font-size: 16px;
+    }
+
+    .result p {
+      font-size: 14px;
+      line-height: 1.5;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: #667eea;
+      animation: spin 0.8s linear infinite;
+      margin-right: 8px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .info-box {
+      background: #f0f4ff;
+      border-left: 4px solid #667eea;
+      padding: 15px;
+      border-radius: 4px;
+      margin-bottom: 30px;
+      font-size: 13px;
+      color: #444;
+    }
+
+    .info-box strong {
+      color: #667eea;
+    }
+
+    button:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>📸 Subir Imágenes de Charms</h1>
+    <p class="subtitle">Sincroniza tus URLs de Cloudinary con la base de datos</p>
+
+    <div class="info-box">
+      <strong>📋 Instrucciones:</strong><br>
+      1. Descarga tu Google Sheet como CSV<br>
+      2. Selecciona el archivo aquí<br>
+      3. Presiona "Subir e Sincronizar"<br>
+      Listo. Tus imágenes se actualizarán automáticamente.
+    </div>
+
+    <form id="uploadForm">
+      <div class="form-group">
+        <label for="csvFile">Selecciona archivo CSV:</label>
+        <input
+          type="file"
+          id="csvFile"
+          name="csv"
+          accept=".csv,text/csv"
+          required
+        >
+      </div>
+
+      <button type="submit" id="submitBtn">Subir e Sincronizar</button>
+    </form>
+
+    <div class="result" id="result"></div>
+  </div>
+
+  <script>
+    const form = document.getElementById('uploadForm');
+    const fileInput = document.getElementById('csvFile');
+    const submitBtn = document.getElementById('submitBtn');
+    const resultDiv = document.getElementById('result');
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      if (!fileInput.files.length) {
+        showResult('error', '❌ Error', 'Por favor selecciona un archivo CSV');
+        return;
+      }
+
+      const file = fileInput.files[0];
+
+      // Validar que sea CSV
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        showResult('error', '❌ Error', 'Por favor selecciona un archivo .csv válido');
+        return;
+      }
+
+      // Leer archivo
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        try {
+          submitBtn.disabled = true;
+          showResult('loading', '⏳ Procesando...', 'Subiendo y sincronizando imágenes...');
+
+          const csvContent = event.target.result;
+
+          // Enviar al backend
+          const response = await fetch('https://cuatropajaros.onrender.com/api/upload-charm-images', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'text/plain'
+            },
+            body: csvContent
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Error al subir imágenes');
+          }
+
+          showResult(
+            'success',
+            '✅ ¡Éxito!',
+            `${data.count} imágenes de charms sincronizadas correctamente. Los cambios se aplicarán en los próximos minutos.`
+          );
+
+          // Limpiar input
+          fileInput.value = '';
+        } catch (error) {
+          showResult('error', '❌ Error', error.message);
+        } finally {
+          submitBtn.disabled = false;
+        }
+      };
+
+      reader.readAsText(file);
+    });
+
+    function showResult(type, title, message) {
+      resultDiv.className = `result ${type}`;
+      resultDiv.innerHTML = `
+        <h3>${title}</h3>
+        <p>${message}</p>
+      `;
+      resultDiv.style.display = 'block';
+    }
+  </script>
+</body>
+</html>

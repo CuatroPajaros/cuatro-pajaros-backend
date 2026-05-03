@@ -42,6 +42,10 @@ app.use('/CUERO', express.static(path.join(fotosPath, 'CUERO'), {
 app.use(express.static(fotosPath));
 app.use('/fotos', express.static(fotosPath));
 
+// Servir HTML para subir imágenes de charms
+const backendPath = path.resolve(__dirname);
+app.use(express.static(backendPath));
+
 console.log('📁 Rutas de imágenes configuradas:');
 console.log('  /CHARMS ->', path.join(fotosPath, 'CHARMS'));
 console.log('  /CORDONES ->', path.join(fotosPath, 'CORDONES'));
@@ -69,6 +73,15 @@ const productSchema = new mongoose.Schema({
 });
 
 const Product = mongoose.model('Product', productSchema);
+
+// Schema para imágenes de charms
+const charmImageSchema = new mongoose.Schema({
+  _id: String, // charm_id o unique name
+  cloudinary_url: String,
+  nombre_charm: String
+});
+
+const CharmImage = mongoose.model('CharmImage', charmImageSchema);
 
 // Autenticar con Google Sheets API usando Service Account
 async function getAuthenticatedSheetsClient() {
@@ -205,6 +218,58 @@ app.post('/api/sync', async (req, res) => {
   }
 });
 
+// API Endpoint para subir/procesar CSV de imágenes de charms
+app.post('/api/upload-charm-images', express.text(), async (req, res) => {
+  try {
+    console.log('📤 Procesando CSV de imágenes de charms...');
+
+    // Parsear CSV desde el body (texto plano)
+    const csvText = req.body;
+    const records = csv.parse(csvText, {
+      columns: true,
+      skip_empty_lines: true
+    });
+
+    console.log(`📊 CSV parseado: ${records.length} registros encontrados`);
+
+    let processedCount = 0;
+    const charmImages = [];
+
+    for (const record of records) {
+      const nombreUnico = record['Nombre Único (Display Name)']?.trim();
+      const cloudinaryUrl = record['Clour ordinary URL']?.trim();
+      const nombreCharm = record['Nombre_Charm']?.trim();
+
+      if (nombreUnico && cloudinaryUrl) {
+        charmImages.push({
+          _id: nombreUnico,
+          cloudinary_url: cloudinaryUrl,
+          nombre_charm: nombreCharm || nombreUnico
+        });
+        processedCount++;
+      }
+    }
+
+    if (charmImages.length === 0) {
+      return res.status(400).json({ error: 'No charm images found in CSV' });
+    }
+
+    // Limpiar y reinsertar en CharmImage
+    await CharmImage.deleteMany({});
+    await CharmImage.insertMany(charmImages);
+
+    console.log(`✅ ${processedCount} imágenes de charms guardadas en MongoDB`);
+    res.json({
+      success: true,
+      message: `${processedCount} charm images procesadas`,
+      count: processedCount
+    });
+  } catch (err) {
+    console.error('❌ Error en /api/upload-charm-images:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // API Endpoint para productos
 app.get('/api/products', async (req, res) => {
   try {
@@ -216,8 +281,24 @@ app.get('/api/products', async (req, res) => {
     }
 
     const products = await Product.find(filter).sort({ name: 1 });
-    console.log('📦 Productos enviados:', products.length, 'Filtro:', filter);
-    res.json(products);
+
+    // Buscar imágenes en CharmImage collection si es tipo CHARM
+    const enrichedProducts = await Promise.all(products.map(async (product) => {
+      const productObj = product.toObject();
+
+      if (productObj.type === 'CHARM') {
+        // Buscar imagen por nombre único (usando _id del producto como referencia)
+        const charmImg = await CharmImage.findById(productObj._id);
+        if (charmImg && charmImg.cloudinary_url) {
+          productObj.image = charmImg.cloudinary_url;
+        }
+      }
+
+      return productObj;
+    }));
+
+    console.log('📦 Productos enviados:', enrichedProducts.length, 'Filtro:', filter);
+    res.json(enrichedProducts);
   } catch (err) {
     console.error('❌ Error en /api/products:', err.message);
     res.status(500).json({ error: err.message });
@@ -306,6 +387,7 @@ app.get('/', (req, res) => {
     endpoints: {
       products: 'GET /api/products',
       sync: 'POST /api/sync',
+      uploadCharmImages: 'POST /api/upload-charm-images',
       validateCode: 'POST /api/validate-code',
       applyDiscount: 'POST /api/apply-discount',
       activeCodes: 'GET /api/active-codes'
