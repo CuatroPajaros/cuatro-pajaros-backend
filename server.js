@@ -53,7 +53,11 @@ console.log('  /CUERO ->', path.join(fotosPath, 'CUERO'));
 
 // MongoDB Connection
 mongoose.connect(process.env.MONGODB_URI)
-  .then(() => console.log('✅ MongoDB conectado'))
+  .then(async () => {
+    console.log('✅ MongoDB conectado');
+    // Cargar cache de imágenes al conectarse
+    await loadCharmImagesCache();
+  })
   .catch(err => console.error('❌ MongoDB:', err.message));
 
 // Sistema de descuentos desde local
