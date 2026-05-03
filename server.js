@@ -59,6 +59,21 @@ mongoose.connect(process.env.MONGODB_URI)
 // Sistema de descuentos desde local
 console.log('🎁 Sistema de códigos de descuento activado (local)');
 
+// Cache de imágenes en memoria
+let charmImagesCache = {};
+
+async function loadCharmImagesCache() {
+  try {
+    const images = await CharmImage.find({});
+    images.forEach(img => {
+      charmImagesCache[img.nombre_charm] = img.cloudinary_url;
+    });
+    console.log(`📸 Cache de ${Object.keys(charmImagesCache).length} imágenes cargado en memoria`);
+  } catch (err) {
+    console.error('❌ Error cargando cache de imágenes:', err.message);
+  }
+}
+
 // Schema
 const productSchema = new mongoose.Schema({
   _id: String,
@@ -258,6 +273,9 @@ app.post('/api/upload-charm-images', express.text(), async (req, res) => {
     await CharmImage.deleteMany({});
     await CharmImage.insertMany(charmImages);
 
+    // Recargar el cache en memoria
+    await loadCharmImagesCache();
+
     console.log(`✅ ${processedCount} imágenes de charms guardadas en MongoDB`);
     res.json({
       success: true,
@@ -282,23 +300,16 @@ app.get('/api/products', async (req, res) => {
 
     const products = await Product.find(filter).sort({ name: 1 });
 
-    // Buscar imágenes en CharmImage collection si es tipo CHARM
-    const enrichedProducts = await Promise.all(products.map(async (product) => {
+    // Asignar imágenes desde cache en memoria
+    const enrichedProducts = products.map((product) => {
       const productObj = product.toObject();
 
-      if (productObj.type === 'CHARM') {
-        // Buscar imagen por nombre del charm
-        const charmImg = await CharmImage.findOne({ nombre_charm: productObj.name });
-        if (charmImg && charmImg.cloudinary_url) {
-          productObj.image = charmImg.cloudinary_url;
-          console.log(`🖼️ Imagen encontrada para ${productObj.name}: ${charmImg.cloudinary_url.substring(0, 50)}...`);
-        } else {
-          console.log(`⚠️ No se encontró imagen para: ${productObj.name}`);
-        }
+      if (productObj.type === 'CHARM' && charmImagesCache[productObj.name]) {
+        productObj.image = charmImagesCache[productObj.name];
       }
 
       return productObj;
-    }));
+    });
 
     console.log('📦 Productos enviados:', enrichedProducts.length, 'Filtro:', filter);
     res.json(enrichedProducts);
