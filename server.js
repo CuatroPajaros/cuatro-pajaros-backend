@@ -287,10 +287,13 @@ app.get('/api/products', async (req, res) => {
       const productObj = product.toObject();
 
       if (productObj.type === 'CHARM') {
-        // Buscar imagen por nombre único (usando _id del producto como referencia)
-        const charmImg = await CharmImage.findById(productObj._id);
+        // Buscar imagen por nombre del charm
+        const charmImg = await CharmImage.findOne({ nombre_charm: productObj.name });
         if (charmImg && charmImg.cloudinary_url) {
           productObj.image = charmImg.cloudinary_url;
+          console.log(`🖼️ Imagen encontrada para ${productObj.name}: ${charmImg.cloudinary_url.substring(0, 50)}...`);
+        } else {
+          console.log(`⚠️ No se encontró imagen para: ${productObj.name}`);
         }
       }
 
