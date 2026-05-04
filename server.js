@@ -569,5 +569,72 @@ setInterval(autoSyncFromGoogleSheets, 5 * 60 * 1000);
 // Hacer la primera sincronización al iniciar
 autoSyncFromGoogleSheets();
 
+// ========================================
+// POST /api/checkout - Crear pedido
+// ========================================
+app.post('/api/checkout', async (req, res) => {
+  try {
+    const orderData = req.body;
+
+    if (!orderData.nombre_cliente || !orderData.email || !orderData.telefono ||
+        !orderData.direccion || !orderData.resumen_pedido || !orderData.total) {
+      return res.status(400).json({
+        success: false,
+        message: 'Faltan datos obligatorios'
+      });
+    }
+
+    const airtableResponse = await axios.post(
+      `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/${process.env.AIRTABLE_TABLE_NAME}`,
+      {
+        records: [{
+          fields: {
+            fecha: new Date().toISOString().split('T')[0],
+            nombre_cliente: orderData.nombre_cliente,
+            email: orderData.email,
+            telefono: orderData.telefono,
+            direccion: orderData.direccion,
+            resumen_pedido: orderData.resumen_pedido,
+            total: orderData.total,
+            estado: 'Confirmado'
+          }
+        }]
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.AIRTABLE_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('✅ Pedido guardado en Airtable:', airtableResponse.data.records[0].id);
+
+    const { items = {} } = orderData;
+    const { charms = [], cueros = [], cordones = [] } = items;
+
+    for (const item of [...charms, ...cueros, ...cordones]) {
+      if (item.id && item.cantidad) {
+        await Product.updateOne(
+          { _id: item.id },
+          { $inc: { stock: -item.cantidad } }
+        );
+      }
+    }
+
+    res.json({
+      success: true,
+      message: 'Pedido confirmado',
+      orderId: airtableResponse.data.records[0].id
+    });
+
+  } catch (error) {
+    console.error('❌ Error en checkout:', error.message);
+    res.status(500).json({
+      success: false,
+      message: 'Error: ' + error.message
+    });
+  }
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log('🚀 http://localhost:' + PORT));
