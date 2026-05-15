@@ -4309,7 +4309,11 @@ function generateFilterButtons(tags) {
       btn.setAttribute('onclick', `filterCharms('${tag}')`);
 
       // Insertar antes del botón "Limpiar"
-      container.insertBefore(btn, cleanBtn);
+      if (cleanBtn) {
+     container.insertBefore(btn, cleanBtn);
+   } else {
+     container.appendChild(btn);
+   }
     });
 
     console.log(`✨ ${validTags.length} filtros generados dinámicamente`);
