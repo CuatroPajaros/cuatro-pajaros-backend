@@ -73,7 +73,7 @@ async function getCharmsFromGoogleSheets() {
     const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=866448467`;
     console.log(`🔗 URL CSV: ${csvUrl}`);
 
-    const response = await axios.get(csvUrl);
+    const response = await axios.get(csvUrl, {   headers: {     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'   } });
     const csvData = response.data;
 
     const rows = csv.parse(csvData, {
