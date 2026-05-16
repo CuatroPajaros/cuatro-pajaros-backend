@@ -70,7 +70,7 @@ async function getCharmsFromGoogleSheets() {
   try {
     console.log('📥 Descargando Google Sheet como CSV público...');
     const spreadsheetId = '1Ed2d6dqnyc700gsF6oW-ZJP3hx32qNV31TSwszGEi3k';
-    const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=0`;
+    const csvUrl = `https://docs.google.com/spreadsheets/d/${spreadsheetId}/export?format=csv&gid=866448467`;
     console.log(`🔗 URL CSV: ${csvUrl}`);
 
     const response = await axios.get(csvUrl);
