@@ -278,10 +278,10 @@ app.post('/api/checkout', async (req, res) => {
       }
     );
 
-    const { items = {} } = orderData;
-    const { charms = [], cueros = [], cordones = [] } = items;
+    // Decrementar stock
+    const items = orderData.items || [];
 
-    for (const item of [...charms, ...cueros, ...cordones]) {
+    for (const item of items) {
       if (item.id && item.cantidad) {
         await Product.updateOne(
           { _id: item.id },
