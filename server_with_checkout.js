@@ -411,9 +411,9 @@ app.post('/api/checkout', async (req, res) => {
             color_cuero: orderData.color_cuero || '',
             color_cordon: orderData.color_cordon || '',
             color_ojales: orderData.color_ojales || '',
-            charms_detalles: JSON.stringify(orderData.charms_detalles || []),
-            libretas_detalles: JSON.stringify(orderData.libretas_detalles || []),
-            precio_libretas: orderData.precio_libretas || 0,
+            charms_detalles: orderData.charms_detalles || '',
+            libretas_detalles: orderData.libretas_detalles || '',
+            precio_libretas: parseInt(orderData.precio_libretas) || 0,
             pochette: orderData.pochette ? 'Sí' : 'No',
             estado: 'Confirmado'
           }
