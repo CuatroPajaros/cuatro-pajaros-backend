@@ -415,6 +415,9 @@ app.post('/api/checkout', async (req, res) => {
             libretas_detalles: orderData.libretas_detalles || '',
             precio_libretas: parseInt(orderData.precio_libretas) || 0,
             pochette: orderData.pochette ? 'Sí' : 'No',
+            descuento_codigo: orderData.descuento_codigo || '',
+            descuento_monto: parseInt(orderData.descuento_monto) || 0,
+            notas_adicionales: orderData.notas_adicionales || '',
             estado: 'Confirmado'
           }
         }]
