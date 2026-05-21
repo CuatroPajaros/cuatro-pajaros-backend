@@ -1141,6 +1141,43 @@ async function autoSyncFromGoogleSheets() {
   }
 }
 
+// ============ ENDPOINT PARA ACTUALIZAR PRECIOS (ADMIN) ============
+app.post('/api/admin/update-price', async (req, res) => {
+  try {
+    const { productId, newPrice } = req.body;
+
+    if (!productId || !newPrice) {
+      return res.status(400).json({ error: 'productId y newPrice requeridos' });
+    }
+
+    const updated = await Product.findByIdAndUpdate(
+      productId,
+      { price: parseInt(newPrice) },
+      { new: true }
+    );
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Producto no encontrado' });
+    }
+
+    console.log(`💰 Precio actualizado: ${productId} → $${newPrice}`);
+    res.json({ success: true, product: updated });
+  } catch (err) {
+    console.error('❌ Error actualizando precio:', err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ============ ENDPOINT PARA LISTAR PRODUCTOS (PARA ENCONTRAR IDS) ============
+app.get('/api/admin/products', async (req, res) => {
+  try {
+    const products = await Product.find({}, 'name _id price type');
+    res.json(products);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Sincronizar automáticamente cada 5 minutos
 setInterval(autoSyncFromGoogleSheets, 5 * 60 * 1000);
 
