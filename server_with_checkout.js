@@ -414,6 +414,7 @@ app.post('/api/checkout', async (req, res) => {
             charms_detalles: JSON.stringify(orderData.charms_detalles || []),
             libretas_detalles: JSON.stringify(orderData.libretas_detalles || []),
             precio_libretas: orderData.precio_libretas || 0,
+            pochette: orderData.pochette ? 'Sí' : 'No',
             estado: 'Confirmado'
           }
         }]
