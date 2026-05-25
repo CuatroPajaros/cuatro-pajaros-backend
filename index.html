@@ -3817,41 +3817,8 @@ function sendConfirmationEmails(orderData, clientData, orderId) {
   return Promise.resolve();
 }
 
-function initPayment(){
-  // Integración Airtable - Flujo de pago por Llave Bancolombia
-  crearPedidoEnAirtable();
-}
-  // ACTUALIZADO: Ahora usa el API en lugar de Airtable
-  console.log('🔵 initPayment() called - Current state:', {
-    fmt: S.fmt,
-    fmtN: S.fmtN,
-    charms: S.charms,
-    charmsCount: Object.keys(S.charms).length,
-    libs: S.libs,
-    libsCount: Object.keys(S.libs).length
-  });
-
-  var nombre = document.getElementById('nombre').value.trim();
-  var email = document.getElementById('email').value.trim();
-  var dir = document.getElementById('direccion').value.trim();
-  var tel = document.getElementById('telefono').value.trim();
-  var notas = document.getElementById('notas').value.trim();
-  var checked = document.getElementById('terminos-check').checked;
-
-  // Validaciones básicas
-  if(!nombre){ alert('Por favor ingresa tu nombre.'); return; }
-  if(!email){ alert('Por favor ingresa tu email.'); return; }
-  if(!dir){ alert('Por favor ingresa tu dirección de envío.'); return; }
-  if(!checked){
-    document.getElementById('terminos-error').style.display = 'block';
-    document.getElementById('terminos-check').focus();
-    return;
-  }
-
-  console.log('✅ Form validation passed - proceeding to checkout');
-  // Ahora usar procederAlCheckoutConAPI() que envía al backend
-  procederAlCheckoutConAPI();
-}
+// Placeholder - actual payment integration is at the bottom of the file
+// This will be handled by the Airtable integration code below
 
 // ── FUNCIONES PARA ACCESORIOS ────────────────────────
 var ACC = {charms:{},libs:{}};
