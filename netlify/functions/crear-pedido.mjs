@@ -76,11 +76,11 @@ export default async (request) => {
       });
     }
 
-    console.log('✅ Pedido creado en Airtable:', responseData.id);
+    console.log('✅ Pedido creado en Airtable:', responseData.records[0].id);
 
     return new Response(JSON.stringify({
       success: true,
-      recordId: responseData.id,
+      recordId: responseData.records[0].id,
       message: 'Pedido creado exitosamente'
     }), {
       status: 200,
