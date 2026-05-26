@@ -21,7 +21,16 @@ export default async (request) => {
 
     const AIRTABLE_BASE_ID = 'appHc3E8X4q0kdps0';
     const AIRTABLE_TABLE_ID = 'tblLfvkCVikoR3vt1';
-    const AIRTABLE_API_KEY = 'patmRW5Nz1yJTEOmfBE6ozW5jl1UllSsbuQuchUjYAGsWTf9m3rwhWvcMOpLaSS3GkGaXEpPnNCiJRF6cD1rjrtHtykO1au1KNToLONd99ZJSRnyEXlM';
+    const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
+
+    if (!AIRTABLE_API_KEY) {
+      return new Response(JSON.stringify({
+        error: 'Airtable API key not configured'
+      }), {
+        status: 500,
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
 
     // Actualizar el registro con estado de pago confirmado
     const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}/${recordId}`;
