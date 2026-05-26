@@ -26,19 +26,19 @@ export default async (request) => {
     const AIRTABLE_TABLE_ID = 'tblLfvkCVikoR3vt1';
     const AIRTABLE_API_KEY = 'patmRW5Nz1yJTEOmfBE6ozW5jl1UllSsbuQuchUjYAGsWTf9m3rwhWvcMOpLaSS3GkGaXEpPnNCiJRF6cD1rjrtHtykO1au1KNToLONd99ZJSRnyEXlM';
 
-    // Construir el registro
+    // Construir el registro usando Field IDs (Airtable requiere IDs en lugar de nombres)
     const record = {
       fields: {
-        'nombre_cliente': pedido.nombre_cliente,
-        'email': pedido.email,
-        'telefono': pedido.telefono,
-        'direccion': pedido.direccion,
-        'Localidad': pedido.Localidad,
-        'notas_adicionales': pedido.notas_adicionales || '',
-        'charms_detalles': pedido.charms_detalles || '',
-        'total': pedido.total || 0,
-        'estado': pedido.estado || 'Pedido Solicitado',
-        'fecha': new Date().toISOString()
+        'fldyWUX7pJo62sc3c': pedido.nombre_cliente,        // nombre_cliente
+        'fldwVpsz2Qfl6Zrzf': pedido.email,                  // email
+        'fldmddUSROBNmfUU9': pedido.telefono,               // telefono
+        'flduOyuBmNCs402qe': pedido.direccion,             // direccion
+        'fld3lYy1RKtrF5JFK': pedido.Localidad,             // Localidad
+        'fldUjgcSInu4vIO3c': pedido.notas_adicionales || '', // notas_adicionales
+        'fldFquamDL72OY3ED': pedido.charms_detalles || '',  // charms_detalles
+        'fldFkBXdCipH1XWZH': pedido.total || 0,             // total
+        'fld2Ho4dKREFcCfcC': pedido.estado || 'Pedido Solicitado', // estado
+        'fldN0VWlkUScEvs0a': new Date().toISOString()      // fecha
       }
     };
 

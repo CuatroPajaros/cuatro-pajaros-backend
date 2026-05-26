@@ -34,8 +34,8 @@ export default async (request) => {
       },
       body: JSON.stringify({
         fields: {
-          'estado': 'Pago Confirmado por Cliente',
-          'Timestamp Confirmación Pago': new Date().toISOString()
+          'fld2Ho4dKREFcCfcC': 'Pago Confirmado por Cliente',  // estado
+          'fldEdLHa16U286Hso': new Date().toISOString()        // Timestamp Confirmación Pago
         }
       })
     });
