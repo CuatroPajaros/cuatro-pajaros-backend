@@ -51,7 +51,7 @@ export default async (request) => {
         'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify(record)
+      body: JSON.stringify({ records: [record] })
     });
 
     const responseData = await airtableResponse.json();
