@@ -48,12 +48,13 @@ export default async (request) => {
         'fldFkBXdCipH1XWZH': pedido.total || 0,             // total
         'fld2Ho4dKREFcCfcC': pedido.estado || 'Pedido Solicitado', // estado
         'fldN0VWlkUScEvs0a': new Date().toISOString(),      // fecha
-        // Nuevos campos de detalles del pedido - REEMPLAZA ESTOS IDs CON LOS FIELD IDs CORRECTOS DE AIRTABLE
-        'fldX1': pedido.tamaño || '',                        // tamaño
-        'fldX2': pedido.color_customer || '',               // color_customer
-        'fldX3': pedido.color_ojeria || '',                 // color_ojeria
-        'fldX4': pedido.color_cordon || '',                 // color_cordon
-        'fldX5': pedido.libretas_detalles || ''             // libretas_detalles
+        // Campos de detalles del pedido con Field IDs correctos
+        'fld19Qdx6S0OFGAiU': pedido.tamaño || '',           // tamaño_journal
+        'fld9CHgNndOyyqogs': pedido.color_customer || '',   // color_cuero
+        'fldmAv2wyttj2RKXg': pedido.color_ojeria || '',     // color_ojales
+        'fldVkKF0QZTZhs0sz': pedido.color_cordon || '',     // color_cordon
+        'fld2ufRUJ9zVx8O43': pedido.libretas_detalles || '', // libretas_detalles
+        'fldaX1NvwN8ltlQN1': pedido.pochette || ''          // pochette
       }
     };
 

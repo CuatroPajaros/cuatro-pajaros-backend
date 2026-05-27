@@ -4827,6 +4827,7 @@ async function crearPedidoEnAirtable() {
       color_cordon: pedido.color_cordon,
       libretas_detalles: pedido.libretas,
       charms_detalles: pedido.accesorios,
+      pochette: pedido.pochette,
       notas_adicionales: pedido.notas || '',
       total: pedido.monto,
       estado: 'Pedido Solicitado',
@@ -4945,6 +4946,10 @@ function recolectarDatosPedido() {
       }
     }
 
+    // Recolectar pochette
+    const pochetteCheckbox = document.getElementById('pochette-check');
+    const pochette = pochetteCheckbox ? pochetteCheckbox.checked : false;
+
     return {
       nombre,
       email,
@@ -4958,6 +4963,7 @@ function recolectarDatosPedido() {
       color_customer: S.col || 'No especificado',
       color_ojeria: S.oja || 'No especificado',
       color_cordon: S.ela || 'No especificado',
+      pochette: pochette ? 'Sí' : 'No',
       monto: Math.round(monto)
     };
 
