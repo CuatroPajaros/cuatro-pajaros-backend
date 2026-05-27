@@ -4930,11 +4930,17 @@ function recolectarDatosPedido() {
       monto += S.shippingCost;
     }
 
+    // Aplicar descuento si está activo
+    if (discountState.applied && discountState.descuento_monto > 0) {
+      monto -= discountState.descuento_monto;
+    }
+
     console.log('💰 Cálculo de monto:', {
       journal: S.fmtP || 0,
       libretas: S.libP || 0,
       charms: (S.charms ? Object.keys(S.charms).length : 0) * 20000,
       envío: S.shippingCost || 0,
+      descuento: discountState.descuento_monto || 0,
       total: monto
     });
 
