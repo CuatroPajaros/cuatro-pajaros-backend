@@ -47,7 +47,13 @@ export default async (request) => {
         'fldFquamDL72OY3ED': pedido.charms_detalles || '',  // charms_detalles
         'fldFkBXdCipH1XWZH': pedido.total || 0,             // total
         'fld2Ho4dKREFcCfcC': pedido.estado || 'Pedido Solicitado', // estado
-        'fldN0VWlkUScEvs0a': new Date().toISOString()      // fecha
+        'fldN0VWlkUScEvs0a': new Date().toISOString(),      // fecha
+        // Nuevos campos de detalles del pedido - REEMPLAZA ESTOS IDs CON LOS FIELD IDs CORRECTOS DE AIRTABLE
+        'fldX1': pedido.tamaño || '',                        // tamaño
+        'fldX2': pedido.color_customer || '',               // color_customer
+        'fldX3': pedido.color_ojeria || '',                 // color_ojeria
+        'fldX4': pedido.color_cordon || '',                 // color_cordon
+        'fldX5': pedido.libretas_detalles || ''             // libretas_detalles
       }
     };
 

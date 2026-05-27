@@ -4821,8 +4821,13 @@ async function crearPedidoEnAirtable() {
       telefono: pedido.telefono,
       direccion: pedido.direccion,
       Localidad: pedido.localidad,
-      notas_adicionales: pedido.notas || '',
+      tamaño: pedido.tamaño,
+      color_customer: pedido.color_customer,
+      color_ojeria: pedido.color_ojeria,
+      color_cordon: pedido.color_cordon,
+      libretas_detalles: pedido.libretas,
       charms_detalles: pedido.accesorios,
+      notas_adicionales: pedido.notas || '',
       total: pedido.monto,
       estado: 'Pedido Solicitado',
       fecha: new Date().toISOString()
@@ -4932,6 +4937,14 @@ function recolectarDatosPedido() {
       total: monto
     });
 
+    // Recolectar libretas seleccionadas
+    let libretas = [];
+    if (S.libs) {
+      for (const [libId, cantidad] of Object.entries(S.libs)) {
+        libretas.push(`${libId} (x${cantidad})`);
+      }
+    }
+
     return {
       nombre,
       email,
@@ -4940,6 +4953,11 @@ function recolectarDatosPedido() {
       localidad,
       notas,
       accesorios: accesorios.join('\n') || 'Ninguno',
+      libretas: libretas.join('\n') || 'Ninguno',
+      tamaño: S.fmtN || 'No especificado',
+      color_customer: S.col || 'No especificado',
+      color_ojeria: S.oja || 'No especificado',
+      color_cordon: S.ela || 'No especificado',
       monto: Math.round(monto)
     };
 
