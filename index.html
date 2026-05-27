@@ -4952,25 +4952,46 @@ function recolectarDatosPedido() {
 function mostrarModalPago(pedido) {
   const modal = document.createElement('div');
   modal.id = 'payment-modal';
-  modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000;`;
+  modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26,18,16,0.4); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 20px;`;
 
   modal.innerHTML = `
-    <div style="background: white; padding: 40px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-      <h2 style="margin: 0 0 20px 0; color: #333;">💳 Instrucciones de Pago</h2>
-      <div style="background: #f5f5f5; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: left;">
-        <p style="margin: 0 0 10px 0; color: #666;"><strong>Transferencia bancaria a:</strong></p>
-        <p style="margin: 0 0 15px 0; font-size: 18px; color: #000;"><strong>Llave Bancolombia:</strong></p>
-        <div style="background: white; padding: 12px; border: 2px solid #ddd; border-radius: 6px; margin: 0 0 10px 0; display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-family: monospace; font-weight: bold; color: #333;">CUATROPAJAROS@ICLOUD.COM</span>
-          <button onclick="copyToClipboard('CUATROPAJAROS@ICLOUD.COM')" style="background: #4CAF50; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; font-size: 12px;">Copiar</button>
-        </div>
-        <p style="margin: 10px 0; color: #666;"><strong>Monto a transferir:</strong></p>
-        <p style="margin: 0; font-size: 24px; color: #2196F3; font-weight: bold;">$${pedido.monto.toLocaleString('es-CO')}</p>
+    <div style="background: #F8F7F5; padding: 60px 50px; border-radius: 2px; max-width: 580px; width: 100%; box-shadow: 0 8px 32px rgba(26,18,16,0.08); font-family: 'Plus Jakarta Sans', sans-serif;">
+      <div style="text-align: center; margin-bottom: 48px;">
+        <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; letter-spacing: 0.35em; color: #FE9383; font-weight: 500; text-transform: uppercase; margin: 0 0 12px 0;">Paso Final</p>
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 32px; color: #1A1210; font-weight: 400; margin: 0 0 16px 0; line-height: 1.2;">Instrucciones de Pago</h2>
+        <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 14px; color: #6B5E58; line-height: 1.7; margin: 0; max-width: 480px; margin-left: auto; margin-right: auto;">Para finalizar tu pedido, paga por medio de llave inter-bancaria. Una vez verificado tu pago, te enviaremos confirmación por mail y tu pedido será elaborado en el Atelier.</p>
       </div>
-      <p style="margin: 15px 0; color: #666; font-size: 14px;">Una vez realices la transferencia, haz clic en "Confirmar Pago Realizado"</p>
-      <div style="margin-top: 20px; display: flex; gap: 10px;">
-        <button onclick="confirmarPagoEnAirtable()" style="flex: 1; background: #4CAF50; color: white; border: none; padding: 12px 20px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer;">✓ Confirmar Pago Realizado</button>
-        <button onclick="cerrarModalPago()" style="flex: 1; background: #ccc; color: #333; border: none; padding: 12px 20px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer;">Cancelar</button>
+
+      <div style="background: white; padding: 32px; border: 1px solid #E2D9D4; margin-bottom: 32px; border-radius: 2px;">
+        <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; letter-spacing: 0.15em; color: #9C8F89; text-transform: uppercase; font-weight: 500; margin: 0 0 20px 0;">Para proceder al pago:</p>
+
+        <ol style="list-style: decimal; padding-left: 20px; margin: 0 0 24px 0;">
+          <li style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #2E2420; line-height: 1.8; margin-bottom: 12px;">Deja esta página abierta</li>
+          <li style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #2E2420; line-height: 1.8; margin-bottom: 12px;">Desde tu cuenta bancaria o app de pagos, ingresa la llave Bre-b:</li>
+        </ol>
+
+        <div style="background: #FFF3F1; padding: 20px; border-left: 3px solid #FE9383; margin-bottom: 24px; border-radius: 2px; display: flex; justify-content: space-between; align-items: center;">
+          <span style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #1A1210; font-weight: 500; letter-spacing: 0.05em;">CUATROPAJAROS@ICLOUD.COM</span>
+          <button onclick="copyToClipboard('CUATROPAJAROS@ICLOUD.COM')" style="background: #FE9383; color: white; border: none; padding: 8px 16px; border-radius: 2px; cursor: pointer; font-size: 11px; font-weight: 500; font-family: 'Plus Jakarta Sans', sans-serif; letter-spacing: 0.05em; text-transform: uppercase;">Copiar</button>
+        </div>
+
+        <ol style="list-style: decimal; padding-left: 20px; margin: 0;">
+          <li style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #2E2420; line-height: 1.8; margin-bottom: 12px;">Ingresa el monto a pagar:</li>
+        </ol>
+
+        <div style="background: white; padding: 16px; border: 1px solid #E2D9D4; margin-bottom: 24px; border-radius: 2px; text-align: center;">
+          <p style="font-family: 'Playfair Display', serif; font-size: 28px; color: #1A1210; font-weight: 400; margin: 0;">$${pedido.monto.toLocaleString('es-CO')}</p>
+        </div>
+
+        <ol style="list-style: decimal; padding-left: 20px; margin: 0;">
+          <li style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #2E2420; line-height: 1.8; margin-bottom: 12px;">Valida tu pago (¡Gracias!)</li>
+          <li style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #2E2420; line-height: 1.8;">Cuando hayas realizado el pago, regresa a esta página y confirma que tu pago ha sido realizado.</li>
+        </ol>
+      </div>
+
+      <div style="display: flex; gap: 16px;">
+        <button onclick="confirmarPagoEnAirtable()" style="flex: 1; background: #FE9383; color: white; border: none; padding: 16px 24px; border-radius: 2px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.1em; cursor: pointer; text-transform: uppercase; transition: all 0.2s;">✓ Confirmar Pago Realizado</button>
+        <button onclick="cerrarModalPago()" style="flex: 1; background: white; color: #6B5E58; border: 1px solid #E2D9D4; padding: 16px 24px; border-radius: 2px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.1em; cursor: pointer; text-transform: uppercase; transition: all 0.2s;">Cancelar</button>
       </div>
     </div>
   `;
@@ -5017,14 +5038,22 @@ async function confirmarPagoEnAirtable() {
 function mostrarModalConfirmacion() {
   const modal = document.createElement('div');
   modal.id = 'confirmation-modal';
-  modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; justify-content: center; align-items: center; z-index: 10000;`;
+  modal.style.cssText = `position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(26,18,16,0.4); display: flex; justify-content: center; align-items: center; z-index: 10000; padding: 20px;`;
 
   modal.innerHTML = `
-    <div style="background: white; padding: 40px; border-radius: 12px; max-width: 500px; width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.2); text-align: center; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
-      <h2 style="margin: 0 0 20px 0; color: #4CAF50;">✓ ¡Pedido Confirmado!</h2>
-      <p style="margin: 20px 0; color: #666; font-size: 16px; line-height: 1.6;">Tu pago ha sido registrado correctamente. En breve recibirás un email de confirmación con los detalles de tu pedido y el estado de entrega.</p>
-      <p style="margin: 15px 0; color: #999; font-size: 14px;">Gracias por tu compra en Cuatro Pájaros ✨</p>
-      <button onclick="cerrarYLimpiar()" style="background: #4CAF50; color: white; border: none; padding: 12px 30px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 20px;">Cerrar</button>
+    <div style="background: #F8F7F5; padding: 60px 50px; border-radius: 2px; max-width: 580px; width: 100%; box-shadow: 0 8px 32px rgba(26,18,16,0.08); font-family: 'Plus Jakarta Sans', sans-serif; text-align: center;">
+      <div style="margin-bottom: 32px;">
+        <p style="font-family: 'Playfair Display', serif; font-size: 48px; color: #FE9383; margin: 0 0 24px 0; font-weight: 400;">✓</p>
+        <h2 style="font-family: 'Playfair Display', serif; font-size: 36px; color: #1A1210; font-weight: 400; margin: 0 0 20px 0; line-height: 1.2;">¡Pedido Confirmado!</h2>
+        <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #6B5E58; line-height: 1.8; margin: 0; max-width: 480px; margin-left: auto; margin-right: auto;">Gracias por realizar tu pago!</p>
+      </div>
+
+      <div style="background: white; padding: 32px; border: 1px solid #E2D9D4; margin-bottom: 32px; border-radius: 2px;">
+        <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #2E2420; line-height: 1.8; margin: 0 0 16px 0;">Hemos registrado tu pedido. Danos unas horas para verificar tu pago. Recibirás un mail de confirmación con todos detalles de tu pedido.</p>
+        <p style="font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; color: #6B5E58; line-height: 1.8; margin: 0;">Gracias por tu compra en Cuatro Pájaros Atelier ✨</p>
+      </div>
+
+      <button onclick="cerrarYLimpiar()" style="background: #FE9383; color: white; border: none; padding: 16px 40px; border-radius: 2px; font-family: 'Plus Jakarta Sans', sans-serif; font-size: 12px; font-weight: 500; letter-spacing: 0.1em; cursor: pointer; text-transform: uppercase; transition: all 0.2s;">Volver al Configurador</button>
     </div>
   `;
 
