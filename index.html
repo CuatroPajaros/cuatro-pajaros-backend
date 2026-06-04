@@ -2521,18 +2521,18 @@ document.addEventListener('DOMContentLoaded',function(){
     <div id="mensajeDescuento" style="font-family:&#39;Plus Jakarta Sans&#39;,sans-serif;font-size:12px;min-height:16px;margin-bottom:8px;"></div>
 
     <!-- Descuento confirmado (oculto inicialmente) -->
-    <div id="descuentoConfirmado" style="display:none;padding:12px 14px;background:rgba(46,204,113,0.08);border-left:3px solid #2ecc71;border-radius:2px;">
-      <div style="font-family:&#39;Plus Jakarta Sans&#39;,sans-serif;font-size:13px;color:#27ae60;margin-bottom:6px;font-weight:500;">
-        🌙 ¡Código confirmado! Tu sueño merece celebrarse.
+    <div id="descuentoConfirmado" style="display:none;padding:16px 14px;background:linear-gradient(135deg, rgba(254,147,131,0.06) 0%, rgba(255,245,240,0.4) 100%);border-left:3px solid var(--salmon);border-radius:2px;backdrop-filter:blur(4px);">
+      <div style="font-family:&#39;Plus Jakarta Sans&#39;,sans-serif;font-size:12px;color:#1A1210;margin-bottom:8px;font-weight:500;letter-spacing:0.05em;">
+        ✓ Código confirmado
       </div>
-      <div style="font-family:&#39;Plus Jakarta Sans&#39;,sans-serif;font-size:11px;color:#27ae60;opacity:0.8;line-height:1.5;">
-        Disfrutalo, es nuestro pequeño regalo para ti. ✨
+      <div style="font-family:&#39;Plus Jakarta Sans&#39;,sans-serif;font-size:12px;color:#6B5E58;line-height:1.6;margin-bottom:12px;">
+        Tu sueño merece celebrarse. Disfruta nuestro pequeño regalo para ti. ✨
       </div>
-      <div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(46,204,113,0.2);display:flex;justify-content:space-between;align-items:center;">
-        <span style="font-family:&#39;Plus Jakarta Sans&#39;,sans-serif;font-size:11px;color:var(--mid);">Descuento aplicado:</span>
-        <span style="font-family:&#39;Playfair Display&#39;,serif;font-size:14px;color:#2ecc71;font-weight:500;" id="descuentoMonto">$0</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-top:1px solid rgba(254,147,131,0.15);border-bottom:1px solid rgba(254,147,131,0.15);">
+        <span style="font-family:&#39;Plus Jakarta Sans&#39;,sans-serif;font-size:11px;color:#9C8F89;text-transform:uppercase;letter-spacing:0.05em;font-weight:500;">Descuento</span>
+        <span style="font-family:&#39;Playfair Display&#39;,serif;font-size:16px;color:var(--salmon);font-weight:400;" id="descuentoMonto">$0</span>
       </div>
-      <button onclick="limpiarCodigoDescuento()" style="margin-top:8px;width:100%;padding:8px;background:rgba(46,204,113,0.1);border:1px solid rgba(46,204,113,0.3);border-radius:2px;font-family:&#39;Plus Jakarta Sans&#39;,sans-serif;font-size:10px;color:#27ae60;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.1em;font-weight:500;" onmouseover="this.style.background=&#39;rgba(46,204,113,0.2)&#39;;" onmouseout="this.style.background=&#39;rgba(46,204,113,0.1)&#39;;">
+      <button onclick="limpiarCodigoDescuento()" style="margin-top:12px;width:100%;padding:10px;background:white;border:1px solid rgba(254,147,131,0.3);border-radius:2px;font-family:&#39;Plus Jakarta Sans&#39;,sans-serif;font-size:10px;color:#9C8F89;cursor:pointer;transition:all 0.2s;text-transform:uppercase;letter-spacing:0.1em;font-weight:500;" onmouseover="this.style.background=&#39;rgba(254,147,131,0.04)&#39;;this.style.borderColor=&#39;rgba(254,147,131,0.5)&#39;;this.style.color=&#39;#6B5E58&#39;;" onmouseout="this.style.background=&#39;white&#39;;this.style.borderColor=&#39;rgba(254,147,131,0.3)&#39;;this.style.color=&#39;#9C8F89&#39;;">
         Quitar código
       </button>
     </div>
