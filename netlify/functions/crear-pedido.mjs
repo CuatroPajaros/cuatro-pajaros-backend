@@ -1,3 +1,21 @@
+// Función para generar número de pedido único
+function generarNumeroPedido() {
+  const ahora = new Date();
+  const año = ahora.getFullYear().toString().slice(-2);
+  const mes = String(ahora.getMonth() + 1).padStart(2, '0');
+  const dia = String(ahora.getDate()).padStart(2, '0');
+  const aleatorio = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
+  return `PED-${año}${mes}${dia}-${aleatorio}`;
+}
+
+// Función para obtener fecha/hora en zona horaria de Bogotá
+function obtenerFechaBogota() {
+  const ahora = new Date();
+  // Convertir a hora de Bogotá (UTC-5)
+  const bogota = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+  return bogota.toISOString();
+}
+
 export default async (request) => {
   // Solo permitir POST
   if (request.method !== 'POST') {
@@ -35,6 +53,10 @@ export default async (request) => {
       });
     }
 
+    // Generar número de pedido y timestamp en Bogotá
+    const numeroPedido = generarNumeroPedido();
+    const fechaBogota = obtenerFechaBogota();
+
     // Construir el registro usando Field IDs (Airtable requiere IDs en lugar de nombres)
     const record = {
       fields: {
@@ -47,7 +69,7 @@ export default async (request) => {
         'fldFquamDL72OY3ED': pedido.charms_detalles || '',  // charms_detalles
         'fldFkBXdCipH1XWZH': pedido.total || 0,             // total
         'fld2Ho4dKREFcCfcC': pedido.estado || 'Pedido Solicitado', // estado
-        'fldN0VWlkUScEvs0a': new Date().toISOString(),      // fecha
+        'fldN0VWlkUScEvs0a': fechaBogota,                   // fecha (zona horaria Bogotá)
         // Campos de detalles del pedido con Field IDs correctos
         'fld19Qdx6S0OFGAiU': pedido.tamaño || '',           // tamaño_journal
         'fld9CHgNndOyyqogs': pedido.color_customer || '',   // color_cuero
@@ -57,7 +79,9 @@ export default async (request) => {
         'fldaX1NvwN8ltlQN1': pedido.pochette || '',         // pochette
         // Campos de descuento
         'fld2UMLJ7ruZL6cqy': pedido.descuento_codigo || '', // descuento_codigo
-        'fldv9YqqY54elqAVw': pedido.descuento_monto || 0    // descuento_monto
+        'fldv9YqqY54elqAVw': pedido.descuento_monto || 0,   // descuento_monto
+        // Número de pedido
+        'fldOoM0gKOQKDuuyq': numeroPedido                    // resumen_pedido (incluye # pedido)
       }
     };
 
