@@ -4829,6 +4829,8 @@ async function crearPedidoEnAirtable() {
       charms_detalles: pedido.accesorios,
       pochette: pedido.pochette,
       notas_adicionales: pedido.notas || '',
+      descuento_codigo: pedido.descuento_codigo,
+      descuento_monto: pedido.descuento_monto,
       total: pedido.monto,
       estado: 'Pedido Solicitado',
       fecha: new Date().toISOString()
@@ -4956,6 +4958,10 @@ function recolectarDatosPedido() {
     const pochetteCheckbox = document.getElementById('pochette-check');
     const pochette = pochetteCheckbox ? pochetteCheckbox.checked : false;
 
+    // Calcular precio original (antes del descuento)
+    const montoOriginal = monto;
+    const montoConDescuento = discountState.applied && discountState.descuento_monto > 0 ? monto - discountState.descuento_monto : monto;
+
     return {
       nombre,
       email,
@@ -4970,7 +4976,10 @@ function recolectarDatosPedido() {
       color_ojeria: S.oja || 'No especificado',
       color_cordon: S.ela || 'No especificado',
       pochette: pochette ? 'Sí' : 'No',
-      monto: Math.round(monto)
+      monto: Math.round(montoConDescuento),
+      monto_original: Math.round(montoOriginal),
+      descuento_codigo: discountState.codigo || '',
+      descuento_monto: discountState.descuento_monto || 0
     };
 
   } catch (error) {

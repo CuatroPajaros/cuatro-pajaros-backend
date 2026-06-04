@@ -54,7 +54,10 @@ export default async (request) => {
         'fldmAv2wyttj2RKXg': pedido.color_ojeria || '',     // color_ojales
         'fldVkKF0QZTZhs0sz': pedido.color_cordon || '',     // color_cordon
         'fld2ufRUJ9zVx8O43': pedido.libretas_detalles || '', // libretas_detalles
-        'fldaX1NvwN8ltlQN1': pedido.pochette || ''          // pochette
+        'fldaX1NvwN8ltlQN1': pedido.pochette || '',         // pochette
+        // Campos de descuento
+        'fld2UMLJ7ruZL6cqy': pedido.descuento_codigo || '', // descuento_codigo
+        'fldv9YqqY54elqAVw': pedido.descuento_monto || 0    // descuento_monto
       }
     };
 

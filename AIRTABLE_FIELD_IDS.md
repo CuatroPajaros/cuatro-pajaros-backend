@@ -26,6 +26,9 @@
 | libretas_detalles | `fld2ufRUJ9zVx8O43` | Detalles de las libretas seleccionadas |
 | charms_detalles | `fldFquamDL72OY3ED` | Detalles de los charms/accesorios |
 | pochette | `fldaX1NvwN8ltlQN1` | Si incluye pochette (Sí/No) |
+| precio_libretas | `fldeNQA2MZglrMnRh` | Precio total de libretas seleccionadas |
+| descuento_codigo | `fld2UMLJ7ruZL6cqy` | Código de descuento aplicado |
+| descuento_monto | `fldv9YqqY54elqAVw` | Monto del descuento en pesos |
 
 ### Administrative Fields
 | Campo | Field ID | Descripción |
