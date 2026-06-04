@@ -33,10 +33,11 @@
 ### Administrative Fields
 | Campo | Field ID | Descripción |
 |-------|----------|-------------|
+| numero_pedido | `fldjztgomIIc4ms3U` | Número único del pedido (YYMMDD-XX) |
 | notas_adicionales | `fldUjgcSInu4vIO3c` | Notas adicionales del cliente |
 | total | `fldFkBXdCipH1XWZH` | Monto total del pedido |
 | estado | `fld2Ho4dKREFcCfcC` | Estado del pedido |
-| fecha | `fldN0VWlkUScEvs0a` | Fecha de creación del pedido |
+| fecha | `fldN0VWlkUScEvs0a` | Fecha de creación del pedido (zona horaria Bogotá) |
 
 ## Usado en Netlify Functions
 

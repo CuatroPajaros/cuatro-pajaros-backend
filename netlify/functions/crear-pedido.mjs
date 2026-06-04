@@ -4,8 +4,8 @@ function generarNumeroPedido() {
   const año = ahora.getFullYear().toString().slice(-2);
   const mes = String(ahora.getMonth() + 1).padStart(2, '0');
   const dia = String(ahora.getDate()).padStart(2, '0');
-  const aleatorio = Math.floor(Math.random() * 10000).toString().padStart(4, '0');
-  return `PED-${año}${mes}${dia}-${aleatorio}`;
+  const aleatorio = Math.floor(Math.random() * 100).toString().padStart(2, '0');
+  return `${año}${mes}${dia}-${aleatorio}`;
 }
 
 // Función para obtener fecha/hora en zona horaria de Bogotá
@@ -81,7 +81,7 @@ export default async (request) => {
         'fld2UMLJ7ruZL6cqy': pedido.descuento_codigo || '', // descuento_codigo
         'fldv9YqqY54elqAVw': pedido.descuento_monto || 0,   // descuento_monto
         // Número de pedido
-        'fldOoM0gKOQKDuuyq': numeroPedido                    // resumen_pedido (incluye # pedido)
+        'fldjztgomIIc4ms3U': numeroPedido                    // numero_pedido
       }
     };
 
