@@ -38,6 +38,7 @@
 | total | `fldFkBXdCipH1XWZH` | Monto total del pedido |
 | estado | `fld2Ho4dKREFcCfcC` | Estado del pedido |
 | fecha | `fldN0VWlkUScEvs0a` | Fecha de creación del pedido (zona horaria Bogotá) |
+| timestamp_creacion_pedido | `fldi7piFPEAwhhdBt` | Timestamp cuando se abre el modal de pago (intención de compra) |
 
 ## Usado en Netlify Functions
 

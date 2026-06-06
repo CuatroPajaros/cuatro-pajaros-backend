@@ -81,7 +81,9 @@ export default async (request) => {
         'fld2UMLJ7ruZL6cqy': pedido.descuento_codigo || '', // descuento_codigo
         'fldv9YqqY54elqAVw': pedido.descuento_monto || 0,   // descuento_monto
         // Número de pedido
-        'fldjztgomIIc4ms3U': numeroPedido                    // numero_pedido
+        'fldjztgomIIc4ms3U': numeroPedido,                   // numero_pedido
+        // Timestamp de creación
+        'fldi7piFPEAwhhdBt': pedido.timestamp_creacion_pedido || fechaBogota // timestamp_creacion_pedido
       }
     };
 
