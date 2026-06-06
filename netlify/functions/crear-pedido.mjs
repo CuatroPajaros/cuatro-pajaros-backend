@@ -7,8 +7,8 @@ async function generarNumeroPedido(AIRTABLE_BASE_ID, AIRTABLE_TABLE_ID, AIRTABLE
   const fechaHoy = `${año}${mes}${dia}`;
 
   try {
-    // Consultar Airtable para obtener el último número del día
-    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}?filterByFormula=FIND("${fechaHoy}", {numero_pedido})`;
+    // Consultar Airtable para obtener TODOS los registros
+    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}?fields=numero_pedido`;
 
     const response = await fetch(url, {
       headers: {
@@ -18,30 +18,40 @@ async function generarNumeroPedido(AIRTABLE_BASE_ID, AIRTABLE_TABLE_ID, AIRTABLE
     });
 
     if (!response.ok) {
-      console.warn('⚠️ No se pudo consultar Airtable para número secuencial, usando 01');
+      console.warn('⚠️ Error en Airtable:', response.status, response.statusText);
       return `${fechaHoy}-01`;
     }
 
     const data = await response.json();
-    const pedidosHoy = data.records || [];
+    const registros = data.records || [];
 
-    // Extraer números secuenciales del día
-    const numerosUsados = pedidosHoy
+    console.log(`📊 Encontrados ${registros.length} registros en Airtable`);
+
+    // Filtrar pedidos de hoy y extraer números
+    const numerosHoy = registros
+      .filter(r => {
+        const numPedido = r.fields.numero_pedido || '';
+        return numPedido.startsWith(fechaHoy);
+      })
       .map(r => {
-        const numeroPedido = r.fields.numero_pedido || '';
-        const match = numeroPedido.match(new RegExp(`${fechaHoy}-(\\d+)`));
+        const numPedido = r.fields.numero_pedido || '';
+        const match = numPedido.match(new RegExp(`${fechaHoy}-(\\d+)$`));
         return match ? parseInt(match[1]) : 0;
       })
       .filter(n => n > 0);
 
-    // Obtener el próximo número
-    const proximoNumero = Math.max(...numerosUsados, 0) + 1;
-    const numeroFormato = String(proximoNumero).padStart(2, '0');
+    console.log(`📋 Números usados hoy (${fechaHoy}):`, numerosHoy);
 
-    return `${fechaHoy}-${numeroFormato}`;
+    // Obtener el próximo número
+    const proximoNumero = Math.max(0, ...numerosHoy) + 1;
+    const numeroFormato = String(proximoNumero).padStart(2, '0');
+    const numeroPedidoFinal = `${fechaHoy}-${numeroFormato}`;
+
+    console.log(`✅ Nuevo número de pedido: ${numeroPedidoFinal}`);
+    return numeroPedidoFinal;
+
   } catch (error) {
     console.error('❌ Error generando número secuencial:', error);
-    // Fallback a número simple si hay error
     return `${fechaHoy}-01`;
   }
 }
@@ -52,6 +62,19 @@ function obtenerFechaBogota() {
   // Convertir a hora de Bogotá (UTC-5)
   const bogota = new Date(ahora.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
   return bogota.toISOString();
+}
+
+// Función para convertir un timestamp ISO a zona horaria de Bogotá
+function convertirABogota(isoString) {
+  if (!isoString) return obtenerFechaBogota();
+  try {
+    const fecha = new Date(isoString);
+    const bogota = new Date(fecha.toLocaleString('en-US', { timeZone: 'America/Bogota' }));
+    return bogota.toISOString();
+  } catch (error) {
+    console.warn('⚠️ Error convirtiendo timestamp a Bogotá:', error);
+    return obtenerFechaBogota();
+  }
 }
 
 export default async (request) => {
@@ -107,7 +130,7 @@ export default async (request) => {
         'fldFquamDL72OY3ED': pedido.charms_detalles || '',  // charms_detalles
         'fldFkBXdCipH1XWZH': pedido.total || 0,             // total
         'fld2Ho4dKREFcCfcC': pedido.estado || 'Pedido Solicitado', // estado
-        'fldN0VWlkUScEvs0a': fechaBogota,                   // fecha (zona horaria Bogotá)
+        'fldN0VWlkUScEvs0a': convertirABogota(new Date().toISOString()),                   // fecha (zona horaria Bogotá)
         // Campos de detalles del pedido con Field IDs correctos
         'fld19Qdx6S0OFGAiU': pedido.tamaño || '',           // tamaño_journal
         'fld9CHgNndOyyqogs': pedido.color_customer || '',   // color_cuero
@@ -120,8 +143,8 @@ export default async (request) => {
         'fldv9YqqY54elqAVw': pedido.descuento_monto || 0,   // descuento_monto
         // Número de pedido
         'fldjztgomIIc4ms3U': numeroPedido,                   // numero_pedido
-        // Timestamp de creación
-        'fldi7piFPEAwhhdBt': pedido.timestamp_creacion_pedido || fechaBogota // timestamp_creacion_pedido
+        // Timestamp de creación (convertir a Bogotá)
+        'fldi7piFPEAwhhdBt': convertirABogota(pedido.timestamp_creacion_pedido) // timestamp_creacion_pedido
       }
     };
 
