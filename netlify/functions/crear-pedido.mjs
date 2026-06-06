@@ -1,11 +1,49 @@
-// Función para generar número de pedido único
-function generarNumeroPedido() {
+// Función para generar número de pedido secuencial (YYMMDD-01, YYMMDD-02, etc.)
+async function generarNumeroPedido(AIRTABLE_BASE_ID, AIRTABLE_TABLE_ID, AIRTABLE_API_KEY) {
   const ahora = new Date();
   const año = ahora.getFullYear().toString().slice(-2);
   const mes = String(ahora.getMonth() + 1).padStart(2, '0');
   const dia = String(ahora.getDate()).padStart(2, '0');
-  const aleatorio = Math.floor(Math.random() * 100).toString().padStart(2, '0');
-  return `${año}${mes}${dia}-${aleatorio}`;
+  const fechaHoy = `${año}${mes}${dia}`;
+
+  try {
+    // Consultar Airtable para obtener el último número del día
+    const url = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}?filterByFormula=FIND("${fechaHoy}", {numero_pedido})`;
+
+    const response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${AIRTABLE_API_KEY}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    if (!response.ok) {
+      console.warn('⚠️ No se pudo consultar Airtable para número secuencial, usando 01');
+      return `${fechaHoy}-01`;
+    }
+
+    const data = await response.json();
+    const pedidosHoy = data.records || [];
+
+    // Extraer números secuenciales del día
+    const numerosUsados = pedidosHoy
+      .map(r => {
+        const numeroPedido = r.fields.numero_pedido || '';
+        const match = numeroPedido.match(new RegExp(`${fechaHoy}-(\\d+)`));
+        return match ? parseInt(match[1]) : 0;
+      })
+      .filter(n => n > 0);
+
+    // Obtener el próximo número
+    const proximoNumero = Math.max(...numerosUsados, 0) + 1;
+    const numeroFormato = String(proximoNumero).padStart(2, '0');
+
+    return `${fechaHoy}-${numeroFormato}`;
+  } catch (error) {
+    console.error('❌ Error generando número secuencial:', error);
+    // Fallback a número simple si hay error
+    return `${fechaHoy}-01`;
+  }
 }
 
 // Función para obtener fecha/hora en zona horaria de Bogotá
@@ -53,8 +91,8 @@ export default async (request) => {
       });
     }
 
-    // Generar número de pedido y timestamp en Bogotá
-    const numeroPedido = generarNumeroPedido();
+    // Generar número de pedido secuencial y timestamp en Bogotá
+    const numeroPedido = await generarNumeroPedido(AIRTABLE_BASE_ID, AIRTABLE_TABLE_ID, AIRTABLE_API_KEY);
     const fechaBogota = obtenerFechaBogota();
 
     // Construir el registro usando Field IDs (Airtable requiere IDs en lugar de nombres)
