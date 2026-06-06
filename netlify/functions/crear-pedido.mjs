@@ -130,7 +130,7 @@ export default async (request) => {
         'fldFquamDL72OY3ED': pedido.charms_detalles || '',  // charms_detalles
         'fldFkBXdCipH1XWZH': pedido.total || 0,             // total
         'fld2Ho4dKREFcCfcC': pedido.estado || 'Pedido Solicitado', // estado
-        'fldN0VWlkUScEvs0a': convertirABogota(new Date().toISOString()),                   // fecha (zona horaria Bogotá)
+        'fldSQAg6dsbW7HFC0': convertirABogota(new Date().toISOString()),                   // fecha_creacion_bogota (zona horaria Bogotá)
         // Campos de detalles del pedido con Field IDs correctos
         'fld19Qdx6S0OFGAiU': pedido.tamaño || '',           // tamaño_journal
         'fld9CHgNndOyyqogs': pedido.color_customer || '',   // color_cuero

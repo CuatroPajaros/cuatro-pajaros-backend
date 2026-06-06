@@ -37,8 +37,8 @@
 | notas_adicionales | `fldUjgcSInu4vIO3c` | Notas adicionales del cliente |
 | total | `fldFkBXdCipH1XWZH` | Monto total del pedido |
 | estado | `fld2Ho4dKREFcCfcC` | Estado del pedido |
-| fecha | `fldN0VWlkUScEvs0a` | Fecha de creación del pedido (zona horaria Bogotá) |
-| timestamp_creacion_pedido | `fldi7piFPEAwhhdBt` | Timestamp cuando se abre el modal de pago (intención de compra) |
+| fecha_creacion_bogota | `fldSQAg6dsbW7HFC0` | Fecha de creación del pedido (zona horaria Bogotá) |
+| timestamp_creacion_pedido | `fldi7piFPEAwhhdBt` | Timestamp cuando se abre el modal de pago (zona horaria Bogotá) |
 
 ## Usado en Netlify Functions
 
