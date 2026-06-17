@@ -1,4 +1,4 @@
-const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+// Usa fetch nativo de Node 18 (disponible en Netlify Functions)
 
 const AIRTABLE_BASE_ID  = 'appHc3E8X4q0kdps0';
 const AIRTABLE_TABLE_ID = 'tblLfvkCVikoR3vt1';
@@ -19,6 +19,7 @@ async function generarNumeroPedido() {
     const seq  = String((data.records || []).length + 1).padStart(2,'0');
     return `${seq}-${sufijo}`;
   } catch(e) {
+    console.error('Error generando numero_pedido:', e);
     return `${String(Math.floor(Math.random()*90)+10)}-${sufijo}`;
   }
 }
@@ -26,15 +27,25 @@ async function generarNumeroPedido() {
 exports.handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') return {
     statusCode: 200,
-    headers: { 'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'Content-Type','Access-Control-Allow-Methods':'POST,OPTIONS' },
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Content-Type',
+      'Access-Control-Allow-Methods': 'POST,OPTIONS'
+    },
     body: ''
   };
-  if (event.httpMethod !== 'POST') return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+
+  if (event.httpMethod !== 'POST') {
+    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) };
+  }
 
   try {
     const pedido = JSON.parse(event.body);
+    console.log('Pedido recibido:', JSON.stringify(Object.keys(pedido)));
+
     const numero_pedido = await generarNumeroPedido();
 
+    // Nota: Libreta_Cantidad es multilineText en Airtable → enviar como string
     const fields = {
       nombre_cliente:    pedido.nombre_cliente || '',
       email:             pedido.email || '',
@@ -42,12 +53,12 @@ exports.handler = async (event) => {
       direccion:         pedido.direccion || '',
       Localidad:         pedido.Localidad || '',
       numero_pedido,
-      'tamaño_journal':  pedido.tamaño_journal || '',
+      tamaño_journal:    pedido.tamaño_journal || '',
       color_cuero:       pedido.color_cuero || '',
       color_ojales:      pedido.color_ojales || '',
       color_cordon:      pedido.color_cordon || '',
       libretas_detalles: pedido.libretas_detalles || '',
-      Libreta_Cantidad:  Number(pedido.Libreta_Cantidad) || 0,
+      Libreta_Cantidad:  String(pedido.Libreta_Cantidad || '0'),
       charm1_detalles:   pedido.charm1_detalles || '',
       charm2_detalles:   pedido.charm2_detalles || '',
       charm3_detalles:   pedido.charm3_detalles || '',
@@ -60,22 +71,46 @@ exports.handler = async (event) => {
       Total_charms:      Number(pedido.Total_charms) || 0,
       total:             Number(pedido.total) || 0,
       estado:            'Pedido Solicitado',
-      fecha:             pedido.fecha || new Date().toISOString(),
-      'Timestamp Creación Pedido': pedido.timestamp_creacion_pedido || new Date().toISOString()
     };
 
-    const res  = await fetch(AIRTABLE_URL, { method: 'POST', headers: HEADERS, body: JSON.stringify({ fields }) });
+    // Campos de fecha solo si tienen valor válido
+    if (pedido.fecha) fields.fecha = pedido.fecha;
+    if (pedido.timestamp_creacion_pedido) {
+      fields['Timestamp Creación Pedido'] = pedido.timestamp_creacion_pedido;
+    }
+
+    console.log('Enviando a Airtable fields:', JSON.stringify(Object.keys(fields)));
+
+    const res  = await fetch(AIRTABLE_URL, {
+      method: 'POST',
+      headers: HEADERS,
+      body: JSON.stringify({ fields })
+    });
+
     const data = await res.json();
 
     if (!res.ok) {
-      console.error('Airtable error:', JSON.stringify(data));
-      return { statusCode: 500, headers: { 'Access-Control-Allow-Origin':'*' }, body: JSON.stringify({ error: 'Error guardando en Airtable', details: data.error }) };
+      console.error('Airtable error response:', JSON.stringify(data));
+      return {
+        statusCode: 500,
+        headers: { 'Access-Control-Allow-Origin': '*' },
+        body: JSON.stringify({ error: 'Error guardando en Airtable', details: JSON.stringify(data) })
+      };
     }
 
-    return { statusCode: 200, headers: { 'Access-Control-Allow-Origin':'*' }, body: JSON.stringify({ recordId: data.id, numero_pedido }) };
+    console.log('✅ Pedido creado:', data.id, 'numero:', numero_pedido);
+    return {
+      statusCode: 200,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ recordId: data.id, numero_pedido })
+    };
 
   } catch(err) {
     console.error('Handler error:', err);
-    return { statusCode: 500, headers: { 'Access-Control-Allow-Origin':'*' }, body: JSON.stringify({ error: err.message }) };
+    return {
+      statusCode: 500,
+      headers: { 'Access-Control-Allow-Origin': '*' },
+      body: JSON.stringify({ error: err.message })
+    };
   }
 };

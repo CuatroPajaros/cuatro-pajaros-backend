@@ -1,4 +1,4 @@
-const fetch = (...args) => import('node-fetch').then(({default: f}) => f(...args));
+// Usa fetch nativo de Node 18
 
 const AIRTABLE_BASE_ID  = 'appHc3E8X4q0kdps0';
 const AIRTABLE_TABLE_ID = 'tblLfvkCVikoR3vt1';
@@ -20,11 +20,19 @@ exports.handler = async (event) => {
     const res  = await fetch(url, {
       method: 'PATCH',
       headers: { 'Authorization': `Bearer ${AIRTABLE_API_KEY}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fields: { estado: 'Pago OK', 'Timestamp Confirmación Pago': new Date().toISOString() } })
+      body: JSON.stringify({
+        fields: {
+          estado: 'Pago OK',
+          'Timestamp Confirmación Pago': new Date().toISOString()
+        }
+      })
     });
     const data = await res.json();
 
-    if (!res.ok) return { statusCode: 500, headers: { 'Access-Control-Allow-Origin':'*' }, body: JSON.stringify({ error: 'Error Airtable', details: data.error }) };
+    if (!res.ok) {
+      console.error('Airtable error:', JSON.stringify(data));
+      return { statusCode: 500, headers: { 'Access-Control-Allow-Origin':'*' }, body: JSON.stringify({ error: 'Error Airtable', details: JSON.stringify(data) }) };
+    }
     return { statusCode: 200, headers: { 'Access-Control-Allow-Origin':'*' }, body: JSON.stringify({ ok: true }) };
 
   } catch(err) {
