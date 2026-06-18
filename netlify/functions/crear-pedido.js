@@ -110,7 +110,7 @@ exports.handler = async (event) => {
     fields[F.nombre_cliente] = p.nombre_cliente || '';
     fields[F.numero_pedido]  = numero_pedido;
     fields[F.email]          = p.email || '';
-    fields[F.estado]         = 'Pedido Solicitado';
+    fields[F.estado]         = 'Journal Diseñado';
     fields[F.fecha]          = new Date().toISOString();
 
     // Texto opcional — solo si vienen con valor

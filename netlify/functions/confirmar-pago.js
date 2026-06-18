@@ -47,7 +47,7 @@ exports.handler = async (event) => {
     const path = `/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}/${recordId}`;
     const res  = await httpsRequest('PATCH', path, {
       fields: {
-        'fld2Ho4dKREFcCfcC': 'Pago OK',
+        'fld2Ho4dKREFcCfcC': 'Pago Confirmado por Cliente',
         'fldEdLHa16U286Hso': new Date().toISOString()
       }
     });
