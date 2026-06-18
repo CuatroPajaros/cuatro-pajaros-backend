@@ -4,7 +4,6 @@ const AIRTABLE_BASE_ID  = 'appHc3E8X4q0kdps0';
 const AIRTABLE_TABLE_ID = 'tblLfvkCVikoR3vt1';
 const AIRTABLE_API_KEY  = 'patmRW5Nz1yJTEOmfBE6ozW5jl1UllSsbuQuchUjYAGsWTf9m3rwhWvcMOpLaSS3GkGaXEpPnNCiJRF6cD1rjrtHtykO1au1KNToLONd99ZJSRnyEXlM';
 
-// Field IDs tabla Pedidos
 const F = {
   nombre_cliente:    'fldyWUX7pJo62sc3c',
   numero_pedido:     'fldjztgomIIc4ms3U',
@@ -12,7 +11,7 @@ const F = {
   telefono:          'fldmddUSROBNmfUU9',
   direccion:         'flduOyuBmNCs402qe',
   Localidad:         'fld3lYy1RKtrF5JFK',
-  tamaño_journal:    'fld19Qdx6S0OFGAiU',
+  tamanio_journal:   'fld19Qdx6S0OFGAiU',
   color_cuero:       'fld9CHgNndOyyqogs',
   color_cordon:      'fldVkKF0QZTZhs0sz',
   color_ojales:      'fldmAv2wyttj2RKXg',
@@ -39,11 +38,10 @@ function httpsRequest(method, path, body) {
     const payload = body ? JSON.stringify(body) : null;
     const options = {
       hostname: 'api.airtable.com',
-      path,
-      method,
+      path, method,
       headers: {
         'Authorization': 'Bearer ' + AIRTABLE_API_KEY,
-        'Content-Type': 'application/json',
+        'Content-Type':  'application/json',
         ...(payload ? { 'Content-Length': Buffer.byteLength(payload) } : {})
       }
     };
@@ -51,8 +49,8 @@ function httpsRequest(method, path, body) {
       let data = '';
       res.on('data', chunk => data += chunk);
       res.on('end', () => {
-        try { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
-        catch(e) { resolve({ status: res.statusCode, body: data }); }
+        try   { resolve({ status: res.statusCode, body: JSON.parse(data) }); }
+        catch (e) { resolve({ status: res.statusCode, body: data }); }
       });
     });
     req.on('error', reject);
@@ -63,8 +61,8 @@ function httpsRequest(method, path, body) {
 
 async function generarNumeroPedido() {
   const now    = new Date();
-  const dd     = String(now.getDate()).padStart(2, '0');
-  const mm     = String(now.getMonth() + 1).padStart(2, '0');
+  const dd     = String(now.getDate()).padStart(2,'0');
+  const mm     = String(now.getMonth()+1).padStart(2,'0');
   const yy     = String(now.getFullYear()).slice(-2);
   const sufijo = `${dd}${mm}${yy}`;
   try {
@@ -72,16 +70,28 @@ async function generarNumeroPedido() {
     const path   = `/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}?filterByFormula=${filter}&fields%5B%5D=numero_pedido`;
     const res    = await httpsRequest('GET', path, null);
     const count  = (res.body.records || []).length + 1;
-    return String(count).padStart(2, '0') + '-' + sufijo;
+    return String(count).padStart(2,'0') + '-' + sufijo;
   } catch (e) {
-    console.error('Error generando numero_pedido:', e.message);
-    return String(Math.floor(Math.random() * 90) + 10) + '-' + sufijo;
+    return String(Math.floor(Math.random()*90)+10) + '-' + sufijo;
+  }
+}
+
+function setField(fields, fieldId, value, type) {
+  if (type === 'number') {
+    const n = Number(value);
+    if (!isNaN(n)) fields[fieldId] = n;
+  } else if (type === 'singleSelect') {
+    if (value && String(value).trim()) fields[fieldId] = String(value).trim();
+  } else {
+    // text / multilineText
+    const s = value != null ? String(value).trim() : '';
+    if (s) fields[fieldId] = s;
   }
 }
 
 exports.handler = async (event) => {
   const CORS = {
-    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Origin':  '*',
     'Access-Control-Allow-Headers': 'Content-Type',
     'Access-Control-Allow-Methods': 'POST, OPTIONS'
   };
@@ -90,63 +100,73 @@ exports.handler = async (event) => {
   if (event.httpMethod !== 'POST')    return { statusCode: 405, body: 'Method not allowed' };
 
   try {
-    const p = JSON.parse(event.body);
+    const p = JSON.parse(event.body || '{}');
     const numero_pedido = await generarNumeroPedido();
-    console.log('Creando pedido:', numero_pedido);
+    console.log('Creando pedido:', numero_pedido, JSON.stringify(p).slice(0,200));
 
     const fields = {};
-    fields[F.nombre_cliente]    = p.nombre_cliente    || '';
-    fields[F.numero_pedido]     = numero_pedido;
-    fields[F.email]             = p.email             || '';
-    fields[F.telefono]          = p.telefono          || '';
-    fields[F.direccion]         = p.direccion         || '';
-    fields[F.Localidad]         = p.Localidad         || '';
-    fields[F.tamaño_journal]    = p.tamaño_journal    || '';
-    fields[F.color_cuero]       = p.color_cuero       || '';
-    fields[F.color_cordon]      = p.color_cordon      || '';
-    fields[F.color_ojales]      = p.color_ojales      || '';
-    fields[F.charm1_detalles]   = p.charm1_detalles   || '';
-    fields[F.charm2_detalles]   = p.charm2_detalles   || '';
-    fields[F.charm3_detalles]   = p.charm3_detalles   || '';
-    fields[F.charm4_detalles]   = p.charm4_detalles   || '';
-    fields[F.libretas_detalles] = p.libretas_detalles || '';
-    fields[F.Libreta_Cantidad]  = String(p.Libreta_Cantidad || 0);
-    fields[F.pochette]          = p.pochette          || 'No';
-    fields[F.notas_adicionales] = p.notas_adicionales || '';
-    fields[F.descuento_codigo]  = p.descuento_codigo  || '';
-    fields[F.descuento_monto]   = Number(p.descuento_monto) || 0;
-    fields[F.precio_journal]    = Number(p.precio_journal)  || 0;
-    fields[F.Total_charms]      = Number(p.Total_charms)    || 0;
-    fields[F.total]             = Number(p.total)           || 0;
-    fields[F.estado]            = 'Pedido Solicitado';
-    fields[F.fecha]             = new Date().toISOString();
+
+    // Texto obligatorio
+    fields[F.nombre_cliente] = p.nombre_cliente || '';
+    fields[F.numero_pedido]  = numero_pedido;
+    fields[F.email]          = p.email || '';
+    fields[F.estado]         = 'Pedido Solicitado';
+    fields[F.fecha]          = new Date().toISOString();
+
+    // Texto opcional — solo si vienen con valor
+    setField(fields, F.telefono,          p.telefono,          'text');
+    setField(fields, F.direccion,         p.direccion,         'text');
+    setField(fields, F.Localidad,         p.Localidad,         'text');
+    setField(fields, F.tamanio_journal,   p.tamanio_journal || p['tamaño_journal'], 'text');
+    setField(fields, F.color_cuero,       p.color_cuero,       'text');
+    setField(fields, F.color_cordon,      p.color_cordon,      'text');
+    setField(fields, F.color_ojales,      p.color_ojales,      'text');
+    setField(fields, F.charm1_detalles,   p.charm1_detalles,   'text');
+    setField(fields, F.charm2_detalles,   p.charm2_detalles,   'text');
+    setField(fields, F.charm3_detalles,   p.charm3_detalles,   'text');
+    setField(fields, F.charm4_detalles,   p.charm4_detalles,   'text');
+    setField(fields, F.libretas_detalles, p.libretas_detalles, 'text');
+    setField(fields, F.notas_adicionales, p.notas_adicionales, 'text');
+    setField(fields, F.descuento_codigo,  p.descuento_codigo,  'text');
+
+    // Libreta_Cantidad es multilineText — enviar como string
+    const libCant = p.Libreta_Cantidad != null ? String(p.Libreta_Cantidad) : '';
+    if (libCant) fields[F.Libreta_Cantidad] = libCant;
+
+    // singleSelect
+    const pochette = p.pochette === true || p.pochette === 'Sí' ? 'Sí' : 'No';
+    fields[F.pochette] = pochette;
+
+    // Números
+    setField(fields, F.precio_journal,  p.precio_journal,  'number');
+    setField(fields, F.Total_charms,    p.Total_charms,    'number');
+    setField(fields, F.descuento_monto, p.descuento_monto, 'number');
+    setField(fields, F.total,           p.total,           'number');
+
+    // Timestamps opcionales
     if (p.timestamp_creacion_pedido) fields[F.timestamp_creacion] = p.timestamp_creacion_pedido;
+
+    console.log('Fields a enviar:', JSON.stringify(fields).slice(0,400));
 
     const path = `/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_ID}`;
     const res  = await httpsRequest('POST', path, { fields });
 
+    console.log('Airtable status:', res.status, JSON.stringify(res.body).slice(0,300));
+
     if (res.status !== 200) {
-      console.error('Airtable error:', JSON.stringify(res.body));
       return {
-        statusCode: 500,
-        headers: CORS,
-        body: JSON.stringify({ error: 'Error guardando en Airtable', details: JSON.stringify(res.body) })
+        statusCode: 500, headers: CORS,
+        body: JSON.stringify({ error: 'Error guardando en Airtable', details: res.body })
       };
     }
 
-    console.log('Pedido OK:', res.body.id);
     return {
-      statusCode: 200,
-      headers: CORS,
+      statusCode: 200, headers: CORS,
       body: JSON.stringify({ recordId: res.body.id, numero_pedido })
     };
 
   } catch (err) {
-    console.error('Handler error:', err.message);
-    return {
-      statusCode: 500,
-      headers: CORS,
-      body: JSON.stringify({ error: err.message })
-    };
+    console.error('Handler error:', err.message, err.stack);
+    return { statusCode: 500, headers: CORS, body: JSON.stringify({ error: err.message }) };
   }
 };
