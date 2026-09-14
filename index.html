@@ -4783,12 +4783,6 @@ function aplicarCodigoDescuento() {
     return;
   }
 
-  // VALIDACIÓN 1: Verificar que hay journal seleccionado
-  if (!S.fmt) {
-    mostrarErrorDescuento('Descuento válido únicamente sobre valor de Journals. No es válido para charms, bijoux, libretas, accesorios o adicionales');
-    return;
-  }
-
   // VALIDACIÓN 2: Prevenir múltiples aplicaciones
   if (discountState.applied && discountState.codigo === codigoValue) {
     mostrarErrorDescuento('Este código ya ha sido aplicado');
@@ -4796,23 +4790,33 @@ function aplicarCodigoDescuento() {
   }
 
   const CODIGOS_VALIDOS = {'BONJOUR': 10, 'LESAMIS': 100};
+  const CODIGOS_CARRITO_COMPLETO = ['LESAMIS']; // Aplica sobre todo el carrito
 
   if (!CODIGOS_VALIDOS[codigoValue]) {
     mostrarErrorDescuento('Código inválido o expirado');
     return;
   }
 
-  // CORRECCIÓN PRINCIPAL: Descuento SOLO sobre journal (S.fmtP), no todo
-  const journal_price_original = S.fmtP || 0;
-
-  if (journal_price_original === 0) {
+  // VALIDACIÓN 1: Verificar que hay journal seleccionado (solo para códigos de journal)
+  if (!CODIGOS_CARRITO_COMPLETO.includes(codigoValue) && !S.fmt) {
     mostrarErrorDescuento('Descuento válido únicamente sobre valor de Journals. No es válido para charms, bijoux, libretas, accesorios o adicionales');
     return;
   }
 
   const descuento_pct = CODIGOS_VALIDOS[codigoValue];
-  const descuento_monto = Math.floor(journal_price_original * descuento_pct / 100);
   const total_original = calcularTotalCheckoutActual();
+
+  // LESAMIS: descuento sobre todo el carrito. Otros códigos: solo sobre el journal
+  const base_descuento = CODIGOS_CARRITO_COMPLETO.includes(codigoValue)
+    ? total_original
+    : (S.fmtP || 0);
+
+  if (base_descuento === 0) {
+    mostrarErrorDescuento('Descuento válido únicamente sobre valor de Journals. No es válido para charms, bijoux, libretas, accesorios o adicionales');
+    return;
+  }
+
+  const descuento_monto = Math.floor(base_descuento * descuento_pct / 100);
   const total_final = total_original - descuento_monto;
 
   discountState = {codigo: codigoValue, descuento_pct: descuento_pct, descuento_monto: descuento_monto, journal_price_original: journal_price_original, total_original: total_original, total_final: total_final, applied: true};
