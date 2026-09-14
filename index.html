@@ -4795,7 +4795,7 @@ function aplicarCodigoDescuento() {
     return;
   }
 
-  const CODIGOS_VALIDOS = {'BONJOUR': 10};
+  const CODIGOS_VALIDOS = {'BONJOUR': 10, 'LESAMIS': 100};
 
   if (!CODIGOS_VALIDOS[codigoValue]) {
     mostrarErrorDescuento('Código inválido o expirado');
