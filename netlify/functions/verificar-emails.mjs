@@ -1,4 +1,4 @@
-import { enviarEmail, emailPedidoRegistrado, emailPagoConfirmado, emailPedidoEnviado } from './enviar-email.mjs';
+import { enviarEmail, emailPedidoRegistrado, emailPagoRegistrado, emailPagoConfirmado, emailPedidoEnviado } from './enviar-email.mjs';
 
 const AIRTABLE_API_KEY = process.env.AIRTABLE_API_KEY;
 const AIRTABLE_BASE_ID = 'appHc3E8X4q0kdps0';
@@ -14,6 +14,7 @@ async function fetchPedidos(filterFormula) {
   url.searchParams.set('fields[]', 'estado');
   url.searchParams.set('fields[]', 'numero_guia');
   url.searchParams.set('fields[]', 'notif_bienvenida_enviada');
+  url.searchParams.set('fields[]', 'notif_pago_reg_enviada');
   url.searchParams.set('fields[]', 'notif_pago_enviada');
   url.searchParams.set('fields[]', 'notif_envio_enviada');
 
@@ -60,15 +61,14 @@ async function procesarNotificaciones() {
   let processed = 0;
   let errors = 0;
 
-  // 1. Bienvenida: pedidos nuevos sin notificación enviada
+  // ETAPA 1: Bienvenida — diseño finalizado, pedido creado
   try {
-    const pedidosBienvenida = await fetchPedidos(
-      `AND({estado} = 'Pedido Solicitado', OR({notif_bienvenida_enviada} = FALSE(), {notif_bienvenida_enviada} = BLANK()))`
+    const registros = await fetchPedidos(
+      `AND({estado} = 'Journal Diseñado', OR({notif_bienvenida_enviada} = FALSE(), {notif_bienvenida_enviada} = BLANK()))`
     );
+    console.log(`📧 Bienvenidas pendientes: ${registros.length}`);
 
-    console.log(`📧 Bienvenidas pendientes: ${pedidosBienvenida.length}`);
-
-    for (const record of pedidosBienvenida) {
+    for (const record of registros) {
       const f = record.fields;
       if (!f.email) continue;
       try {
@@ -80,26 +80,54 @@ async function procesarNotificaciones() {
         await enviarEmail({ to: f.email, subject, html });
         await markField(record.id, 'notif_bienvenida_enviada', true);
         processed++;
-        console.log(`✅ Bienvenida enviada a ${f.email} (pedido #${f.numero_pedido})`);
+        console.log(`✅ Bienvenida → ${f.email} (pedido #${f.numero_pedido})`);
       } catch (err) {
-        console.error(`❌ Error enviando bienvenida a ${f.email}:`, err.message);
+        console.error(`❌ Bienvenida → ${f.email}:`, err.message);
         errors++;
       }
     }
   } catch (err) {
-    console.error('❌ Error consultando pedidos para bienvenida:', err.message);
+    console.error('❌ Error consultando etapa 1:', err.message);
     errors++;
   }
 
-  // 2. Pago confirmado: sin notificación de pago enviada
+  // ETAPA 2: Comprobante recibido — cliente confirmó pago, pendiente de verificación
   try {
-    const pedidosPago = await fetchPedidos(
-      `AND({estado} = 'Pago Confirmado por Cliente', OR({notif_pago_enviada} = FALSE(), {notif_pago_enviada} = BLANK()))`
+    const registros = await fetchPedidos(
+      `AND({estado} = 'Pago Confirmado por Cliente', OR({notif_pago_reg_enviada} = FALSE(), {notif_pago_reg_enviada} = BLANK()))`
     );
+    console.log(`📸 Comprobantes pendientes: ${registros.length}`);
 
-    console.log(`💳 Confirmaciones de pago pendientes: ${pedidosPago.length}`);
+    for (const record of registros) {
+      const f = record.fields;
+      if (!f.email) continue;
+      try {
+        const { subject, html } = emailPagoRegistrado({
+          nombre: f.nombre_cliente || 'amiga',
+          numeroPedido: f.numero_pedido || record.id
+        });
+        await enviarEmail({ to: f.email, subject, html });
+        await markField(record.id, 'notif_pago_reg_enviada', true);
+        processed++;
+        console.log(`✅ Comprobante recibido → ${f.email} (pedido #${f.numero_pedido})`);
+      } catch (err) {
+        console.error(`❌ Comprobante → ${f.email}:`, err.message);
+        errors++;
+      }
+    }
+  } catch (err) {
+    console.error('❌ Error consultando etapa 2:', err.message);
+    errors++;
+  }
 
-    for (const record of pedidosPago) {
+  // ETAPA 3: Pago confirmado — Fernanda verificó el pago
+  try {
+    const registros = await fetchPedidos(
+      `AND({estado} = 'Pago OK', OR({notif_pago_enviada} = FALSE(), {notif_pago_enviada} = BLANK()))`
+    );
+    console.log(`💛 Confirmaciones de pago pendientes: ${registros.length}`);
+
+    for (const record of registros) {
       const f = record.fields;
       if (!f.email) continue;
       try {
@@ -110,26 +138,25 @@ async function procesarNotificaciones() {
         await enviarEmail({ to: f.email, subject, html });
         await markField(record.id, 'notif_pago_enviada', true);
         processed++;
-        console.log(`✅ Confirmación de pago enviada a ${f.email} (pedido #${f.numero_pedido})`);
+        console.log(`✅ Pago confirmado → ${f.email} (pedido #${f.numero_pedido})`);
       } catch (err) {
-        console.error(`❌ Error enviando confirmación de pago a ${f.email}:`, err.message);
+        console.error(`❌ Pago confirmado → ${f.email}:`, err.message);
         errors++;
       }
     }
   } catch (err) {
-    console.error('❌ Error consultando pedidos para confirmación de pago:', err.message);
+    console.error('❌ Error consultando etapa 3:', err.message);
     errors++;
   }
 
-  // 3. Enviado: pedido despachado sin notificación de envío
+  // ETAPA 4: Enviado — pedido despachado
   try {
-    const pedidosEnviados = await fetchPedidos(
+    const registros = await fetchPedidos(
       `AND({estado} = 'Enviado', OR({notif_envio_enviada} = FALSE(), {notif_envio_enviada} = BLANK()))`
     );
+    console.log(`📦 Notificaciones de envío pendientes: ${registros.length}`);
 
-    console.log(`📦 Notificaciones de envío pendientes: ${pedidosEnviados.length}`);
-
-    for (const record of pedidosEnviados) {
+    for (const record of registros) {
       const f = record.fields;
       if (!f.email) continue;
       try {
@@ -141,14 +168,14 @@ async function procesarNotificaciones() {
         await enviarEmail({ to: f.email, subject, html });
         await markField(record.id, 'notif_envio_enviada', true);
         processed++;
-        console.log(`✅ Notificación de envío enviada a ${f.email} (pedido #${f.numero_pedido})`);
+        console.log(`✅ Enviado → ${f.email} (pedido #${f.numero_pedido})`);
       } catch (err) {
-        console.error(`❌ Error enviando notificación de envío a ${f.email}:`, err.message);
+        console.error(`❌ Enviado → ${f.email}:`, err.message);
         errors++;
       }
     }
   } catch (err) {
-    console.error('❌ Error consultando pedidos enviados:', err.message);
+    console.error('❌ Error consultando etapa 4:', err.message);
     errors++;
   }
 
