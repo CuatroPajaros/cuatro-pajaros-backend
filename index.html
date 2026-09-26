@@ -2657,7 +2657,7 @@ document.addEventListener('DOMContentLoaded',function(){
     <div class="ff"><label>Dirección de entrega completa</label><input type="text" id="direccion" placeholder="Calle, Número, Apto (si aplica)" required=""></div>
     <div class="ff"><label>Localidad y Ciudad</label><input type="text" id="localidad" placeholder="Cuidad · Departamento" required=""></div>
     <div class="ff"><label>Email <span class="optag">para tu confirmación</span></label><input type="email" id="email" placeholder="tu@email.com" required=""></div>
-    <div class="ff"><label>Teléfono / WhatsApp</label><input type="tel" id="telefono" placeholder="+57 300 000 0000"></div>
+    <div class="ff"><label>Teléfono / WhatsApp</label><input type="tel" id="telefono" placeholder="+57 300 000 0000" required=""></div>
     <div class="ff"><label>Notas adicionales <span class="optag">opcional</span></label><textarea id="notas" placeholder="Algún detalle especial para tu journal"></textarea></div>
   </div>
     <div class="notice" id="notice-artesania" style="display: block;"><p><strong>Una nota sobre la artesanía</strong>Al ser cuero natural teñido a mano, cada pieza tiene variaciones propias del proceso artesanal. No es una línea industrial — es trabajo humano, único e imperfecto de la manera más bella. Pequeñas diferencias en el color, la textura y los acabados son parte de la identidad de tu pieza.</p></div>
@@ -4655,6 +4655,13 @@ async function procederAlCheckoutConAPI() {
     const email = document.getElementById('email').value.trim();
     const telefono = document.getElementById('telefono').value.trim();
     const direccion = document.getElementById('direccion').value.trim();
+    const localidad = document.getElementById('localidad') ? document.getElementById('localidad').value.trim() : '';
+
+    // Validar campos obligatorios antes de llamar al servidor
+    if (!nombre_cliente) { alert('Por favor ingresa tu nombre completo.'); return false; }
+    if (!email) { alert('Por favor ingresa tu email.'); return false; }
+    if (!telefono) { alert('Por favor ingresa tu teléfono / WhatsApp.'); return false; }
+    if (!direccion) { alert('Por favor ingresa tu dirección de entrega.'); return false; }
 
     // Construir resumen del pedido
     let resumen_pedido = '';
